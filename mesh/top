@@ -1,0 +1,118 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  4.1                                   |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+convertToMeters 0.001;
+
+Nx1 10; // number of cells in x for inlet 
+Nx2 30; // number of cells in x for mixing region 
+Ny 10; // number of cells in y direction 
+Nz 1; // number of cells in z direction 
+
+vertices
+(
+    // Lower Inlet Back
+    (-49.32845 -26.30028 -25)     //0
+    (0 -25 -25)                   //1
+    (0 0 -25)                     //2
+    (-49.98287 -1.30885 -25)      //3
+
+    // Lower Inlet Front
+    (-49.32845 -26.30028 0)   //4
+    (0 -25 0)                 //5
+    (0 0 0)                   //6 
+    (-49.98287 -1.30885 0)    //7
+
+    // Mixing Channel Back
+    (600 -25 -25)                 //8
+    (600 25 -25)                  //9
+    (0 25 -25)                    //10
+
+    // Mixing Channel Front
+    (600 -25 0)               //11
+    (600 25 0)                //12
+    (0 25 0)                  //13
+
+    // Upper Inlet Back
+    (-49.98287 1.30885 -25)       //14
+    (-49.32845 26.30028 -25)      //15
+
+    // Upper Inlet Front
+    (-49.98287 1.30885 0)     //16
+    (-49.32845 26.30028 0)    //17
+
+    // Points used to split the mixing channel into a lower and upper part
+    // This was needed to make the goemetry mesh when coming in a two different angles
+    (600 0 -25)                   //18
+    (600 0 0)                 //19
+);
+
+blocks
+(
+    hex (0 1 2 3 4 5 6 7) ($Nx1 $Ny $Nz)         //Lower Inlet
+        simpleGrading
+            (
+                1
+            (
+                // (0.2 0.3 10)
+                (0.6 0.4 1)
+                (0.2 0.3 0.1)
+            )
+                1
+            )
+    hex (14 2 10 15 16 6 13 17) ($Nx1 $Ny $Nz)   //Upper Inlet
+        simpleGrading
+            (
+                1
+            (
+                (0.2 0.3 10)
+                (0.6 0.4 1)
+                // (0.2 0.3 0.1)
+            )
+                1
+            )
+    hex (1 8 18 2 5 11 19 6) ($Nx2 $Ny $Nz)     //Lower Mixing Channel
+        simpleGrading
+        (
+            (
+                (0.5 0.75 10)
+                (0.5 0.25 1)
+            )
+            (
+                // (0.2 0.3 10)
+                (0.6 0.4 1)
+                (0.2 0.3 0.1)
+            )
+            1
+        )
+    hex (2 18 9 10 6 19 12 13) ($Nx2 $Ny $Nz)   //Upper Mixing Channel
+        simpleGrading
+        (
+            (
+                (0.5 0.75 10)
+                (0.5 0.25 1)
+            )
+            (
+                (0.2 0.3 10)
+                (0.6 0.4 1)
+                // (0.2 0.3 0.1)
+            )
+            1
+        )
+);
+
+edges
+(
+);

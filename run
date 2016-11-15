@@ -6,12 +6,17 @@ import sys
 
 import argparse 
 
+from shutil import copyfile # copy files 
+
 ''' Runs GEMIX project 
-	Changes decomposeParDict, blockMeshDict at runtime for variable 
+	Changes 
+		decomposeParDict, blockMeshDict, fvSchemes, fvSolution, turbulenceProperties 
+	at runtime for variable 
 		x,y,z processor decomposition 
 		Nx1, Nx2, Ny, Nz number of cells 
 		switch on 3D modeling 
 			changes empty to wall and reflecting 
+		turbulence modeling 
 ''' 
 
 # get command line values 
@@ -25,10 +30,9 @@ parser.add_argument('-N',
 	help='number of cells'
 	)
 parser.add_argument('-threeD', action='store_true', default=False, help='run in 3D')
-parser.add_argument('-ke', action='store_true', default=True, 
-	help='use k-Epsilon turbulence model')
+parser.add_argument('-ke', action='store_true',	help='use k-Epsilon turbulence model')
+parser.add_argument('-ko', action='store_true', help='use k-Omega turbulence model')
 args = parser.parse_args()
-print(args)
 
 # get number of processors in x, y, z 
 npx = int(args.np[0])
@@ -44,13 +48,20 @@ Ny = int(args.N[2])
 Nz = int(args.N[3])
 
 # change blockMeshDict location 
-blockDictName = 'system/2D'
+blockDictName = 'mesh/2D'
 if (args.threeD == True):
-	blockDictName = 'system/3D'
+	blockDictName = 'mesh/3D'
 
-# change turbulence model 
-if (args.ke == True):
-	os.chdir('kEpsilon')
+# --- change turbulence model --- 
+turbDir = 'kEpsilon/' # default model 
+if (args.ko == True):
+	turbDir = 'kOmega/' 
+
+# copy fvSchemes, fvSolution, turbulenceProperties to run locations 
+copyfile(turbDir + 'fvSchemes', 'system/fvSchemes')
+copyfile(turbDir + 'fvSolution', 'system/fvSolution')
+copyfile(turbDir + 'turbulenceProperties', 'constant/turbulenceProperties')
+
 
 # --- write decomposeParDict --- 
 decompName = 'system/decomposeParDict'
@@ -77,8 +88,9 @@ out = open(decompName, 'w')
 out.write(string)
 out.close()
 
+
 # --- write blockMesh --- 
-f = open(blockDictName, 'r')
+f = open('mesh/top', 'r')
 string = '' 
 for line in f:
 
@@ -102,12 +114,16 @@ for line in f:
 	else:
 		string += line 
 f.close()
-
+f = open(blockDictName, 'r')
+for line in f:
+	string += line 
+f.close()
 # write changes to blockMeshDict 
 out = open('system/blockMeshDict', 'w')
 out.write(string)
 out.close()
 
+# --- run commands --- 
 def runcmd(cmd):
 	''' run command cmd and exit if errors ''' 
 	x = os.system(cmd)
@@ -134,6 +150,7 @@ runcmd('reconstructPar') # reconstruct parallel folders
 runcmd('interFoam -postProcess -func yPlus') # generate yPlus 
 
 time, str = tt.stop() # end timer 
+
 
 # make notification if wall time is longer than a minute 
 if (time > 60):

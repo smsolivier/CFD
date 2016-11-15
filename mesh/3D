@@ -1,0 +1,80 @@
+
+boundary
+(
+    walls
+    {
+        type wall;
+        faces
+        (
+            (3 7 6 2)
+            (0 4 5 1)
+
+            (1 5 11 8)
+            (10 13 12 9)
+
+            (14 16 6 2)
+            (15 17 13 10)
+
+            // Back
+            (0 1 2 3)    //Lower Inlet
+            (14 2 10 15) //Upper Inlet
+            (1 8 18 2)   //Lower Mixing Channel
+            (2 18 9 10)  //Upper Mixing Channel
+        );
+    }
+
+    topInlet
+    {
+        type patch;
+        faces
+        (
+            (14 16 17 15)
+        );
+    }
+
+    bottomInlet
+    {
+        type patch;
+        faces
+        (
+            (0 4 7 3)
+        );
+    }
+
+    outlet
+    {
+        type patch;
+        faces
+        (
+            (8 11 19 18)
+            (18 19 12 9)
+        );
+    }
+
+    reflecting
+    {
+        type patch; 
+        faces 
+        (
+            // Front
+            (4 5 6 7)    //Lower Inlet
+            (16 6 13 17) //Upper Inlet
+            (5 11 19 6)  //Lower Mixing Channel
+            (6 19 12 13) //Upper Mixing Channel
+        ); 
+    }
+
+    frontBack
+    {
+        type empty;
+        faces
+        (
+        );
+    }
+);
+
+mergePatchPairs
+(
+);
+
+// ************************************************************************* //
