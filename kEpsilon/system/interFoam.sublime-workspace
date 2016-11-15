@@ -1,0 +1,485 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"f14",
+				"f14"
+			],
+			[
+				"Sigmaa",
+				"Sigmaa"
+			],
+			[
+				"err",
+				"err_nbe"
+			],
+			[
+				"t",
+				"t"
+			],
+			[
+				"backw",
+				"backwardEuler"
+			],
+			[
+				"bac",
+				"backwardEuler"
+			],
+			[
+				"for",
+				"forwardEuler"
+			],
+			[
+				"ba",
+				"backwardEuler"
+			],
+			[
+				"dt",
+				"dt"
+			],
+			[
+				"dz",
+				"dz"
+			],
+			[
+				"v",
+				"vectorProduct"
+			]
+		]
+	},
+	"buffers":
+	[
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+		[
+			[
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					""
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"Traditional"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"PdfLaTeX"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"XeLaTeX"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"LuaLaTeX"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"Basic Builder"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"Basic Builder - PdfLaTeX"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"Basic Builder - XeLaTeX"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"Basic Builder - LuaLaTeX"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"Script Builder"
+				]
+			],
+			[
+				"Packages/LaTeXTools/LaTeX.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/Python/Python.sublime-build",
+					""
+				],
+				[
+					"Packages/Python/Python.sublime-build",
+					"Syntax Check"
+				]
+			],
+			[
+				"Packages/Python/Python.sublime-build",
+				""
+			]
+		]
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 132.0,
+		"last_filter": "delete",
+		"selected_items":
+		[
+			[
+				"delete",
+				"LaTeXTools: Delete temporary files"
+			],
+			[
+				"delet",
+				"LaTeXTools: Delete temporary files"
+			],
+			[
+				"instal",
+				"Package Control: Install Package"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 449.0
+	},
+	"console":
+	{
+		"height": 139.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = '2915d1851351e5ee549c20394736b442' + '8bc59f460fa1548d1514676163dafc88'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by) "
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/home/sam/School/489/Proj/angledDuct/0/epsilon",
+		"/home/sam/School/489/Proj/angledDuct/0/k",
+		"/home/sam/School/489/Proj/angledDuct/0/nut",
+		"/home/sam/School/489/Proj/angledDuct/0/p",
+		"/home/sam/School/489/Proj/angledDuct/0/p_rgh",
+		"/home/sam/School/489/Proj/angledDuct/0/alpha.upper",
+		"/home/sam/School/489/Proj/angledDuct/0/U",
+		"/home/sam/School/489/Proj/angledDuct/constant/turbulenceProperties",
+		"/home/sam/School/489/Proj/angledDuct/constant/transportProperties",
+		"/home/sam/School/489/Proj/angledDuct/constant/fvOptions",
+		"/home/sam/School/489/Proj/angledDuct/system/blockMeshDict",
+		"/home/sam/School/489/Proj/angledDuct/system/controlDict",
+		"/home/sam/School/489/Proj/angledDuct/system/fvSchemes",
+		"/home/sam/School/489/Proj/angledDuct/system/fvSolution",
+		"/home/sam/School/489/Proj/angledDuct/system/blockMeshDict.m4",
+		"/home/sam/School/489/Proj/angledDuct/0/alpha.lower",
+		"/home/sam/School/489/Proj/angledDuct/0/alpha.water",
+		"/home/sam/School/489/Proj/turbSquare/constant/turbulenceProperties",
+		"/home/sam/School/489/Proj/turbSquare/constant/transportProperties",
+		"/home/sam/School/489/Proj/turbSquare/0/yPlus",
+		"/home/sam/School/489/Proj/turbSquare/0/U",
+		"/home/sam/School/489/Proj/turbSquare/0/p",
+		"/home/sam/School/489/Proj/turbSquare/0/nut",
+		"/home/sam/School/489/Proj/turbSquare/0/k",
+		"/home/sam/School/489/Proj/turbSquare/0/epsilon",
+		"/home/sam/School/489/Proj/turbSquare/system/streamlines",
+		"/home/sam/School/489/Proj/turbSquare/system/fvSolution",
+		"/home/sam/School/489/Proj/turbSquare/system/fvSchemes",
+		"/home/sam/School/489/Proj/turbSquare/system/decomposeParDict",
+		"/home/sam/School/489/Proj/turbSquare/system/controlDict",
+		"/home/sam/School/489/Proj/turbSquare/system/blockMeshDict",
+		"/home/sam/School/489/Proj/turbSquare/system/3d",
+		"/home/sam/School/489/Proj/turbSquare/system/decomposeParDict~",
+		"/usr/local/bin/plotResidual",
+		"/home/sam/School/489/Proj/turbSquare/run",
+		"/home/sam/School/489/Proj/turbSquare/plot.py",
+		"/home/sam/School/489/Proj/turbSquare/streamlines",
+		"/home/sam/School/489/Proj/turbSquare/fvSolution",
+		"/home/sam/School/489/Proj/turbSquare/fvSchemes",
+		"/home/sam/School/489/Proj/turbSquare/decomposeParDict",
+		"/home/sam/School/489/Proj/turbSquare/controlDict",
+		"/home/sam/School/489/Proj/turbSquare/blockMeshDict",
+		"/home/sam/School/489/Homework/4/simpleAnnulus/system/blockMeshDict",
+		"/home/sam/School/430/P3/1.py",
+		"/home/sam/School/430/P3/kSolve.py",
+		"/home/sam/School/430/P3/error.py",
+		"/home/sam/School/430/P3/2region.py",
+		"/home/sam/School/430/P3/P3.tex",
+		"/home/sam/School/430/P3/power.tex",
+		"/home/sam/School/430/P3/space.tex",
+		"/home/sam/School/430/P3/P1.tex",
+		"/home/sam/School/430/P3/doc.tex",
+		"/home/sam/School/430/P2/doc.tex",
+		"/home/sam/School/430/P3/Title.tex",
+		"/home/sam/School/405/mcnp/src",
+		"/home/sam/School/405/mcnp/parse.py",
+		"/home/sam/School/405/mcnp/plot.py",
+		"/home/sam/School/405/mcnp/run.py",
+		"/home/sam/School/405/mcnp/expCompare.py",
+		"/home/sam/School/405/mcnp/hidespines.py",
+		"/home/sam/School/405/mcnp/R2.py",
+		"/home/sam/School/405/mcnp/Timer.py",
+		"/home/sam/School/405/mcnp/Results/2",
+		"/home/sam/School/405/mcnp/run",
+		"/home/sam/School/405/mcnp/plot.py.py",
+		"/home/sam/School/630/head/parse.py",
+		"/home/sam/School/630/medicalPhysics/out1",
+		"/home/sam/School/405/Lab8/plot.py",
+		"/home/sam/School/405/Lab8/MemoStyle.tex",
+		"/home/sam/School/405/Lab8/rodcal.tex",
+		"/home/sam/School/405/Lab8/Conclusions.tex",
+		"/home/sam/School/405/Lab8/Results.tex",
+		"/home/sam/School/405/Lab8/Procedure.tex",
+		"/home/sam/School/405/Lab8/Theory.tex",
+		"/home/sam/School/405/Lab8/Introduction.tex",
+		"/home/sam/School/405/Lab8/reactivity.py",
+		"/home/sam/helium/Documents/School/2016 Spring/NUEN 329/Homework/Chapter 18/DiffusionEigenvalue.py",
+		"/home/sam/helium/Documents/School/2016 Spring/NUEN 329/Homework/Chapter 18/k.py",
+		"/home/sam/School/430/Homework/2/radial.py",
+		"/usr/local/bin/mp",
+		"/home/sam/.pythonscripts/texTools/macro.py",
+		"/home/sam/.pythonscripts/macros.tex",
+		"/home/sam/School/430/P3/kCode.py",
+		"/home/sam/School/430/P2/Title.tex",
+		"/home/sam/School/430/P2/1.py",
+		"/home/sam/School/430/P2/solvers.py",
+		"/home/sam/School/430/P2/2.py",
+		"/home/sam/School/430/P2/doc.",
+		"/home/sam/.config/sublime-text-3/Packages/User/LaTeXTools.sublime-settings",
+		"/home/sam/School/430/P2/*.te",
+		"/home/sam/School/489/Homework/4/hotRoom/p1.tex",
+		"/home/sam/School/489/Homework/4/hotRoom/Title.tex",
+		"/home/sam/School/489/Homework/4/hotRoom/nu.py",
+		"/home/sam/School/489/Homework/4/hotRoom/plot.py",
+		"/home/sam/School/489/Homework/4/hotRoom/system/blockMeshDict",
+		"/home/sam/School/489/Homework/4/simpleAnnulus/plot.py",
+		"/home/sam/School/489/Homework/4/hotRoom/system/fvSolution",
+		"/home/sam/School/489/Homework/4/hotRoom/system/controlDict",
+		"/home/sam/School/489/Homework/4/p1.tex",
+		"/home/sam/School/430/P1/p1.tex",
+		"/home/sam/School/489/Homework/4/hotRoom/run",
+		"/home/sam/.pythonscripts/Timer.py",
+		"/home/sam/School/489/Homework/4/hotRoom/system/fvSchemes",
+		"/home/sam/School/489/Homework/4/hotRoom/system/setFieldsDict",
+		"/home/sam/School/489/Homework/4/hotRoom/0/p",
+		"/home/sam/School/489/Homework/4/hotRoom/0/p_rgh",
+		"/home/sam/School/489/Homework/4/hotRoom/0/T",
+		"/home/sam/School/489/Homework/4/hotRoom/0/T.orig",
+		"/home/sam/School/489/Homework/4/hotRoom/0/U",
+		"/home/sam/School/489/Homework/4/hotRoom/0/alphat",
+		"/home/sam/School/489/Homework/4/hotRoom/0/epsilon",
+		"/home/sam/School/489/Homework/4/hotRoom/0/k",
+		"/home/sam/School/489/Homework/4/hotRoom/0/nut",
+		"/home/sam/School/489/Homework/4/hotRoom/run.py",
+		"/home/sam/School/489/Homework/4/hotRoom/square.py",
+		"/opt/OpenFOAM/OpenFOAM-4.x/tutorials/heatTransfer/buoyantBoussinesqSimpleFoam/hotRoom/0/p_rgh",
+		"/home/sam/School/489/Homework/4/hotRoom/0/T~",
+		"/home/sam/School/489/Homework/4/squareBend/system/blockMeshDict",
+		"/home/sam/School/489/Homework/4/squareBend/constant/thermophysicalProperties",
+		"/home/sam/School/489/Homework/4/squareBend/system/controlDict",
+		"/home/sam/School/489/Homework/4/squareBend/system/decomposeParDict",
+		"/home/sam/School/489/Homework/4/squareBend/system/fvSchemes",
+		"/home/sam/School/489/Homework/4/squareBend/system/fvSolution",
+		"/home/sam/School/489/Homework/4/squareBend/0/alphat",
+		"/home/sam/School/489/Homework/4/squareBend/0/epsilon",
+		"/home/sam/School/489/Homework/4/squareBend/0/k",
+		"/home/sam/School/489/Homework/4/squareBend/0/nut",
+		"/home/sam/School/489/Homework/4/squareBend/0/p"
+	],
+	"find":
+	{
+		"height": 34.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"lower",
+			"True",
+			"str",
+			"caption",
+			"10000",
+			"Sigma",
+			"innerWall",
+			"\n    ",
+			"fixedWalls",
+			"heatFlux",
+			"ceiling",
+			"inlet",
+			"value",
+			"inlet",
+			"frontAndBack",
+			"1cells",
+			"zeroGradient",
+			"[6pt]",
+			"5table",
+			" \n",
+			"designated emphasis",
+			"plt.figure",
+			"&",
+			"K",
+			"plt.figure",
+			"linear and exponential fits for the check for ",
+			"one minute",
+			"one-minute",
+			"one--minute",
+			"one minute",
+			"\\usepackage{caption}\n\\DeclareCaptionFormat{center}{\\centerline{#1#2}\\\\#3}\n\\captionsetup[figure]{labelsep=period, labelfont=bf}\n\\captionsetup[table]{format=center, labelsep=none}\n\\renewcommand{\\tablename}{TABLE}",
+			"safety shim 3",
+			"safety shim",
+			"}[hp",
+			"\\gls{fischamb}",
+			"3",
+			"ctrl+b",
+			"bib",
+			"footer",
+			"printcombin",
+			"printcombind",
+			"printArray",
+			"wallTime_start",
+			"2.4in",
+			"2.5in",
+			"2.4in",
+			"2.3in",
+			"altmod"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+			]
+		},
+		{
+			"sheets":
+			[
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 24.0
+	},
+	"input":
+	{
+		"height": 0.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			],
+			[
+				1,
+				0,
+				2,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			0.5,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 106.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"output.latextools":
+	{
+		"height": 117.0
+	},
+	"pinned_build_system": "Packages/LaTeXTools/LaTeX.sublime-build",
+	"project": "interFoam.sublime-project",
+	"replace":
+	{
+		"height": 44.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 50.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 372.0
+	},
+	"selected_group": 1,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 150.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

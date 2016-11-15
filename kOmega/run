@@ -1,0 +1,137 @@
+#!/usr/bin/env python3
+
+import Timer 
+import os
+import sys 
+
+import argparse 
+
+''' Runs GEMIX project 
+	Changes decomposeParDict, blockMeshDict at runtime for variable 
+		x,y,z processor decomposition 
+		Nx1, Nx2, Ny, Nz number of cells 
+		switch on 3D modeling 
+			changes empty to wall and reflecting 
+''' 
+
+# get command line values 
+parser = argparse.ArgumentParser(description='run interFoam in parallel')
+parser.add_argument('-np', nargs=3, default=[4,1,1], metavar=('Nx','Ny','Nz'),
+	help='number of processors in x y z')
+parser.add_argument('-N', 
+	nargs=4, 
+	default=[10,30,10,1], 
+	metavar=('NxInlet', 'NxMixing', 'Ny', 'Nz'),
+	help='number of cells'
+	)
+parser.add_argument('-threeD', action='store_true', default=False, help='run in 3D')
+# parser.add_argument('-ke', action='store_true', default=True, 
+# 	help='use k-Epsilon turbulence model')
+args = parser.parse_args()
+print(args)
+
+# get number of processors in x, y, z 
+npx = int(args.np[0])
+npy = int(args.np[1])
+npz = int(args.np[2])
+
+np = npx * npy * npz # total number of cells 
+
+# number of cells 
+Nx1 = int(args.N[0])
+Nx2 = int(args.N[1])
+Ny = int(args.N[2])
+Nz = int(args.N[3])
+
+# change blockMeshDict location 
+blockDictName = 'system/2D'
+if (args.threeD == True):
+	blockDictName = 'system/3D'
+
+# --- write decomposeParDict --- 
+decompName = 'system/decomposeParDict'
+# read in current file 
+f = open(decompName, 'r')
+string = '' 
+for line in f:
+	# change number of subdomains 
+	if (line.startswith('numberOfSubdomains')):
+		string += 'numberOfSubdomains ' + str(np) + ';\n'
+
+	# change Nx Ny Nz 
+	elif ('n (' in line):
+		string += '    n (' + str(npx) + ' ' + str(npy) + ' ' + str(npz) + '); \n'
+
+	# copy everything else 
+	else:
+		string += line 
+
+f.close()
+
+# write changes to file 
+out = open(decompName, 'w')
+out.write(string)
+out.close()
+
+# --- write blockMesh --- 
+f = open(blockDictName, 'r')
+string = '' 
+for line in f:
+
+	# change Nx1 
+	if (line.startswith('Nx1 ')):
+		string += 'Nx1 ' + str(Nx1) + '; \n'
+
+	# change Nx2 
+	elif (line.startswith('Nx2 ')):
+		string += 'Nx2 ' + str(Nx2) + '; \n' 
+
+	# change Ny 
+	elif (line.startswith('Ny ')):
+		string += 'Ny ' + str(Ny) + '; \n' 
+
+	# change Nz 
+	elif (line.startswith('Nz ')):
+		string += 'Nz ' + str(Nz) + '; \n' 
+
+	# leave everything else 
+	else:
+		string += line 
+f.close()
+
+# write changes to blockMeshDict 
+out = open('system/blockMeshDict', 'w')
+out.write(string)
+out.close()
+
+def runcmd(cmd):
+	''' run command cmd and exit if errors ''' 
+	x = os.system(cmd)
+	if (x != 0):
+		sys.exit()
+
+tt = Timer.timer() # start timer 
+
+runcmd('foamListTimes -rm') # delete previous time steps 
+
+if (os.path.isfile('0/yPlus')): # remove previous yPlus 
+	runcmd('rm 0/yPlus')
+
+runcmd('blockMesh') # generate mesh 
+
+# decompose for parallel run, -force overwrite current directories 
+runcmd('decomposePar -force') 
+
+# run pipe into log 
+runcmd('mpirun -np ' + str(np) + ' interFoam -parallel | tee log')
+
+runcmd('reconstructPar') # reconstruct parallel folders 
+
+runcmd('interFoam -postProcess -func yPlus') # generate yPlus 
+
+time, str = tt.stop() # end timer 
+
+# make notification if wall time is longer than a minute 
+if (time > 60):
+	os.system('notify-send --urgency=low -i " " "openfoam done" \
+		"run completed in %s"' % (str))
