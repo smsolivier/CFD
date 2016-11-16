@@ -24,16 +24,14 @@ boundaryField
     {
         // type            fixedValue;
         // value           $internalField;
-        type fixedValue; 
-        value uniform 0; 
+        type zeroGradient; 
     }
 
     bottomInlet
     {
         // type            fixedValue;
         // value           $internalField;
-        type fixedValue; 
-        value uniform 0; 
+        type zeroGradient; 
     }
 
     outlet
@@ -49,8 +47,7 @@ boundaryField
     {
         // type            fixedValue;
         // value           $internalField;
-        type fixedValue; 
-        value uniform 0; 
+        type zeroGradient; 
     }
 
     reflecting

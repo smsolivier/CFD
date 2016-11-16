@@ -18,7 +18,7 @@ convertToMeters 0.001;
 
 Nx1 10; 
 Nx2 30; 
-Ny 20; 
+Ny 10; 
 Nz 1; 
 
 vertices
