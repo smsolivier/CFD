@@ -23,13 +23,13 @@ boundaryField
     topInlet
     {
         type fixedValue; 
-        value uniform (9.9863 -0.52336 0); 
+        value uniform (.99863 -.052336 0); 
     }
 
     bottomInlet
     {
         type fixedValue; 
-        value uniform (9.9863 0.52336 0); 
+        value uniform (.99863 .052336 0); 
     }
 
     outlet
