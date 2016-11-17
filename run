@@ -6,11 +6,7 @@ import sys
 
 import argparse 
 
-import time
-
 from shutil import copyfile # copy files 
-
-import plotTime
 
 ''' Runs GEMIX project 
 	Changes 
