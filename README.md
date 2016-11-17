@@ -9,7 +9,13 @@ Has command line options for
 * number of volumes (split into x_inlet, x_mixing, y and z) 
 * turbulence model (k-Epsilon or k-Omega) 
 * switch for running in 3D 
+
 See ./run -h for help. 
+
+## Running on ada
+* load Python/3.5.2 
+* edit jobFile for wall time, number of processors, memory usage 
+* run bsub < jobFile to submit job 
 
 ## kEpsilon/kOmega
 Contains fvSchemes, fvSolution, turbulenceProperties files corresponding to k-Epsilon or k-Omega. 
