@@ -40,6 +40,8 @@ parser.add_argument('-ke', action='store_true',	help='use k-Epsilon turbulence m
 parser.add_argument('-ko', action='store_true', help='use k-Omega turbulence model')
 # bool for send notification when done, default to on 
 parser.add_argument('-quiet', action='store_true', help='suppress notification when done')
+# make mesh only 
+parser.add_argument('-setupOnly', action='store_true', help='run setup commands but do not run interFoam')
 
 # parse arguments 
 args = parser.parse_args()
@@ -156,15 +158,17 @@ if (os.path.isfile('0/yPlus')): # remove previous yPlus
 
 runcmd('blockMesh') # generate mesh 
 
-# decompose for parallel run, -force overwrite current directories 
-runcmd('decomposePar -force') 
+if (not(args.setupOnly)): # run if not in setupOnly mode 
 
-# run pipe into log 
-runcmd('mpirun -np ' + str(np) + ' interFoam -parallel | tee log')
+	# decompose for parallel run, -force overwrite current directories 
+	runcmd('decomposePar -force') 
 
-runcmd('reconstructPar') # reconstruct parallel folders 
+	# run pipe into log 
+	runcmd('mpirun -np ' + str(np) + ' interFoam -parallel | tee log')
 
-runcmd('interFoam -postProcess -func yPlus') # generate yPlus 
+	runcmd('reconstructPar') # reconstruct parallel folders 
+
+	runcmd('interFoam -postProcess -func yPlus') # generate yPlus 
 
 time, str = tt.stop() # end timer 
 
