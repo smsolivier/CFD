@@ -28,7 +28,7 @@ Run as ./plotTime.py or python3 plotTime
 Reads in a CSV file of the axial pressure to calculate the fRe product. 
 
 ## Current Problems
-* boundary conditions for omega 
+* boundary conditions for omega, currently 1e7 at walls
 * boundary conditions for k 
 * inlet conditions from data 
 * top and bottom inlets not mixing 
