@@ -1,0 +1,15 @@
+#BSUB -L /bin/bash # use bash 
+#BSUB -J job # job name 
+#BSUB -n 20 # number of cores to use
+#BSUB -R "span[ptile=20]" # cores per node to use 
+#BSUB -R "rusage[mem=1000]" # maximum memory per core 
+#BSUB -M 10000 # max memory per node 
+#BSUB -W 01:00 # wall time 
+#BSUB -o stdout.job # output to stdout.jobname 
+#BSUB -e stderr.job # output error 
+
+# commands to run 
+module load OpenFOAM/4.0-intel-2016b 
+source /general/software/x86_64/easybuild/software/OpenFOAM/4.0-intel-2016b/OpenFOAM-4.0/etc/bashrc 
+
+./run -np 5 2 2 -N 20 40 40 40 -threeD -quiet 
