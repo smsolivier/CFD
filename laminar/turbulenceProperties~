@@ -9,49 +9,22 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       volVectorField;
-    object      U;
+    class       dictionary;
+    location    "constant";
+    object      turbulenceProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [0 1 -1 0 0 0 0];
+simulationType  RAS;
 
-internalField   uniform (0 0 0);
-
-boundaryField
+RAS
 {
-    topInlet
-    {
-        type fixedValue; 
-        // value uniform (4.9931 -.2617 0); 
-        value uniform (.99863 -.05234 0);
-    }
+    RASModel        kEpsilon;
 
-    bottomInlet
-    {
-        type fixedValue; 
-        value uniform (.99863 .05234 0);
-    }
+    turbulence      on;
 
-    outlet
-    {
-        type zeroGradient; 
-    }
-
-    walls
-    {
-        type noSlip; 
-    }
-
-    reflecting
-    {
-        type zeroGradient; 
-    }
-
-    frontBack
-    {
-        type empty; 
-    }
+    printCoeffs     on;
 }
+
 
 // ************************************************************************* //

@@ -10,12 +10,12 @@ def getfRe(fname):
 	u = f[:,1:4] 
 	assert(np.shape(u)[1] == 3)
 
-	r = f[:,12:]
+	r = f[:,9:]
 	assert(np.shape(r)[1] == 3)
 
 	# constants
 	ubar = 1 # average velocity 
-	D = .05
+	D = 50e-3
 	d = .2 
 	A = D**2
 	P = 4*D 
@@ -29,7 +29,7 @@ def getfRe(fname):
 	v = np.sqrt(u[:,0]**2 + u[:,1]**2 + u[:,2]**2) # velocity magnitude 
 
 	# dim v 
-	lbound = .1
+	lbound = .2
 	ubound = .4
 
 	z1 = np.argmin(np.fabs(r[:,0] - lbound))

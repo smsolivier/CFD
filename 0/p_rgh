@@ -39,15 +39,19 @@ boundaryField
         // type            fixedValue;
         // value           $internalField;
         // type zeroGradient; 
-        type fixedValue; 
-        value uniform 0; 
+        // type fixedValue; 
+        // value uniform 0; 
+        type totalPressure; 
+        p0 uniform 0; 
     }
 
     walls
     {
         // type            fixedValue;
         // value           $internalField;
-        type zeroGradient; 
+        // type zeroGradient; 
+        type fixedFluxPressure; 
+        value uniform 0; 
     }
 
     reflecting

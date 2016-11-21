@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+foamListTimes -rm
+rm -r processor* postProcessing __pycache__ log 

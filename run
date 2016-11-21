@@ -38,10 +38,16 @@ parser.add_argument('-threeD', action='store_true', default=False, help='run in 
 parser.add_argument('-ke', action='store_true',	help='use k-Epsilon turbulence model')
 # use k-Omega 
 parser.add_argument('-ko', action='store_true', help='use k-Omega turbulence model')
+# use laminar 
+parser.add_argument('-laminar', action='store_true', help='turn off turbulence')
 # bool for send notification when done, default to on 
 parser.add_argument('-quiet', action='store_true', help='suppress notification when done')
 # make mesh only 
 parser.add_argument('-setupOnly', action='store_true', help='run setup commands but do not run interFoam')
+# don't remove previous times 
+parser.add_argument('-cont', action='store_false', help='continue from latest time')
+# use simple geometry 
+parser.add_argument('-simple', action='store_true', help='use geometry without angled inlets')
 
 # parse arguments 
 args = parser.parse_args()
@@ -59,11 +65,15 @@ Nx2 = int(args.N[1])
 Ny = int(args.N[2])
 Nz = int(args.N[3])
 
+NVols = (Nx1 + Nx2) * Ny * Nz 
+
 
 # --- change turbulence model --- 
 turbDir = 'kOmega/' # default model 
 if (args.ke == True):
 	turbDir = 'kEpsilon/' 
+elif (args.laminar == True):
+	turbDir = 'laminar/'
 
 # copy fvSchemes, fvSolution, turbulenceProperties to run locations 
 copyfile(turbDir + 'fvSchemes', 'system/fvSchemes')
@@ -104,42 +114,45 @@ out.close()
 
 # --- write blockMesh --- 
 # change blockMeshDict location 
-blockDictName = 'mesh/2D'
-if (args.threeD == True):
-	blockDictName = 'mesh/3D'
+if (args.simple): # copy simple geometry 
+	copyfile('mesh/simple', 'system/blockMeshDict')
+else: # use better geometry 
+	blockDictName = 'mesh/2D'
+	if (args.threeD == True):
+		blockDictName = 'mesh/3D'
 
-f = open('mesh/top', 'r')
-string = '' 
-for line in f:
+	f = open('mesh/top', 'r')
+	string = '' 
+	for line in f:
 
-	# change Nx1 
-	if (line.startswith('Nx1 ')):
-		string += 'Nx1 ' + str(Nx1) + '; \n'
+		# change Nx1 
+		if (line.startswith('Nx1 ')):
+			string += 'Nx1 ' + str(Nx1) + '; \n'
 
-	# change Nx2 
-	elif (line.startswith('Nx2 ')):
-		string += 'Nx2 ' + str(Nx2) + '; \n' 
+		# change Nx2 
+		elif (line.startswith('Nx2 ')):
+			string += 'Nx2 ' + str(Nx2) + '; \n' 
 
-	# change Ny 
-	elif (line.startswith('Ny ')):
-		string += 'Ny ' + str(Ny) + '; \n' 
+		# change Ny 
+		elif (line.startswith('Ny ')):
+			string += 'Ny ' + str(Ny) + '; \n' 
 
-	# change Nz 
-	elif (line.startswith('Nz ')):
-		string += 'Nz ' + str(Nz) + '; \n' 
+		# change Nz 
+		elif (line.startswith('Nz ')):
+			string += 'Nz ' + str(Nz) + '; \n' 
 
-	# leave everything else 
-	else:
+		# leave everything else 
+		else:
+			string += line 
+	f.close()
+	f = open(blockDictName, 'r')
+	for line in f:
 		string += line 
-f.close()
-f = open(blockDictName, 'r')
-for line in f:
-	string += line 
-f.close()
-# write changes to blockMeshDict 
-out = open('system/blockMeshDict', 'w')
-out.write(string)
-out.close()
+	f.close()
+	# write changes to blockMeshDict 
+	out = open('system/blockMeshDict', 'w')
+	out.write(string)
+	out.close()
 
 
 # --- run commands --- 
@@ -151,17 +164,19 @@ def runcmd(cmd):
 
 tt = Timer.timer() # start timer 
 
-runcmd('foamListTimes -rm') # delete previous time steps 
+if (args.cont):
+	runcmd('foamListTimes -rm') # delete previous time steps 
 
-if (os.path.isfile('0/yPlus')): # remove previous yPlus 
-	runcmd('rm 0/yPlus')
+	if (os.path.isfile('0/yPlus')): # remove previous yPlus 
+		runcmd('rm 0/yPlus')
 
-runcmd('blockMesh') # generate mesh 
+	runcmd('blockMesh') # generate mesh 
 
 if (not(args.setupOnly)): # run if not in setupOnly mode 
 
 	# decompose for parallel run, -force overwrite current directories 
-	runcmd('decomposePar -force') 
+	if (args.cont):
+		runcmd('decomposePar -force') 
 
 	# run pipe into log 
 	runcmd('mpirun -np ' + str(np) + ' interFoam -parallel | tee log')
@@ -169,6 +184,8 @@ if (not(args.setupOnly)): # run if not in setupOnly mode
 	runcmd('reconstructPar') # reconstruct parallel folders 
 
 	runcmd('interFoam -postProcess -func yPlus') # generate yPlus 
+
+print('Number of Volumes =', NVols)
 
 time, str = tt.stop() # end timer 
 

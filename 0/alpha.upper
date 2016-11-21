@@ -24,6 +24,7 @@ boundaryField
     walls
     {
         type            zeroGradient;
+        // value uniform 0; 
     }
     topInlet
     {
@@ -37,10 +38,12 @@ boundaryField
     }
     outlet
     {
-        type            inletOutlet;
-        value           $internalField;
-        inletValue      $internalField;
-        // type zeroGradient; 
+        // type            inletOutlet;
+        // value           0;
+        // inletValue      0;
+        type zeroGradient; 
+        // type calculated; 
+        // value uniform 0; 
     }
     reflecting
     {
