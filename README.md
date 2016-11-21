@@ -30,6 +30,9 @@ Location of blockMeshDict. Top is the top half of the blockMeshDict that is comm
 Plots the time step output to make sure the adjustable time step isn't going too small. 
 Run as ./plotTime.py or python3 plotTime
 
+## generateInlet.py 
+Reads inlet data and writes to 0/U and 0/k before running. 
+
 ## fRe.py
 Reads in a CSV file of the axial pressure to calculate the fRe product. 
 
