@@ -2,3 +2,4 @@
 
 foamListTimes -rm
 rm -r processor* postProcessing __pycache__ log 
+rm 0/V 0/yPlus 0/ccx 0/ccy 0/ccz 
