@@ -9,7 +9,7 @@ Has command line options for
 * number of volumes (split into x_inlet, x_mixing, y and z) 
 * turbulence model (k-Epsilon or k-Omega) 
 * switch for running in 3D 
-* select the inlet velocity data (0.6 or 1)
+* select which case to run 
 * select the method used for inlet data interpolation (nearest|linear|cubic)
     'linear' is recommended (and default) for now, plan to add a b-spline interpolation method
 
@@ -41,6 +41,22 @@ Used along with the -PLOT flag during the program execution. Shows a 3D scatter 
 
 ## fRe.py
 Reads in a CSV file of the axial pressure to calculate the fRe product. 
+
+## readFoam.py 
+Reads latest time directory and writeCellCentres output to plot the velocity profile against the experimental data. 
+
+./readFoam.py case_number 
+
+## readParaView.py 
+Utility to read output csv's. 
+
+Example use:
+
+import readParaView as rpv 
+
+df, names = rpv.read('output.csv', 'U:0', 'U:1', 'U:2', 'Points:1')
+
+returns the columns of data corresponding to U:0, U:1, U:2, Points:1 and a list of the header names. 
 
 ## clean 
 bash script to remove OpenFOAM generated files. 
