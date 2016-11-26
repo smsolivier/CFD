@@ -101,8 +101,8 @@ def parse(xinterp, PLOT=False):
 	print('interpolating U at', xinterp, 'between', x1, x2)
 
 	# get z index for 3D 
-	zwidth = .025 # width of domain in z 
-	indz = np.argmin(np.fabs(r[:2] - zwidth))
+	zwidth = 0 # width of domain in z 
+	indz = np.argmin(np.fabs(r[:,2] - zwidth))
 	z = r[indz, 2] # closest z value to zwidth 
 
 	y1 = [] # store values at x1 
