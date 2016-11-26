@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d as a3
 
+CMAP = 'jet'
 plotData = np.array(['matvals', 'posdata', 'veldata', 'matpos',
 	'kdata', 'newVx', 'newVy', 'newVz', 'newK'])
 for f in plotData:
@@ -75,17 +76,17 @@ fx = fig1.add_subplot(426)
 gx = fig1.add_subplot(427)
 hx = fig1.add_subplot(428)
 
-ax.scatter(posdata[:,1], posdata[:,0], c=veldata[:,0], cmap='plasma', lw=0)
-bx.scatter(matpos[:,1], matpos[:,0], c=newVx, cmap='plasma', lw=0)
-cx.scatter(posdata[:,1], posdata[:,0], c=veldata[:,1], cmap='plasma', lw=0)
-dx.scatter(matpos[:,1], matpos[:,0], c=newVy, cmap='plasma', lw=0)
-ex.scatter(posdata[:,1], posdata[:,0], c=veldata[:,2], cmap='plasma', lw=0)
-fx.scatter(matpos[:,1], matpos[:,0], c=newVz, cmap='plasma', lw=0)
-gx.scatter(posdata[:,1], posdata[:,0], c=kdata[:], cmap='plasma', lw=0)
-hx.scatter(matpos[:,1], matpos[:,0], c=newK, cmap='plasma', lw=0)
+ax.scatter(posdata[:,1], posdata[:,0], c=veldata[:,0], cmap=CMAP, lw=0)
+bx.scatter(matpos[:,1], matpos[:,0], c=newVx, cmap=CMAP, lw=0)
+cx.scatter(posdata[:,1], posdata[:,0], c=veldata[:,1], cmap=CMAP, lw=0)
+dx.scatter(matpos[:,1], matpos[:,0], c=newVy, cmap=CMAP, lw=0)
+ex.scatter(posdata[:,1], posdata[:,0], c=veldata[:,2], cmap=CMAP, lw=0)
+fx.scatter(matpos[:,1], matpos[:,0], c=newVz, cmap=CMAP, lw=0)
+gx.scatter(posdata[:,1], posdata[:,0], c=kdata[:], cmap=CMAP, lw=0)
+hx.scatter(matpos[:,1], matpos[:,0], c=newK, cmap=CMAP, lw=0)
 
-ax.set_title("Before Interpolation")
-bx.set_title("After Interpolation")
+ax.set_title("Given Data")
+bx.set_title("Interpolated Mesh Data")
 ax.set_ylabel(r"$V_x$")
 cx.set_ylabel(r"$V_y$")
 ex.set_ylabel(r"$V_z$")

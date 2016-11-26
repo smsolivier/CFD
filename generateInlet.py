@@ -96,8 +96,6 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	data = ''.join(data)
 	scheme = ''.join(scheme)
 	
-	factorV = 10
-	factorK = 1
 	conversion = 1000
 
 	# Reinitializes the data file name
@@ -173,8 +171,9 @@ def generateInlet(data, scheme, PLOT, STATUS):
 			if (STATUS == True):
 				print("\nFrom '{}' patch in the '{}' file:".format(patch, centersPATH+name))
 				print("\t", dummy)
+				print("\tTotal of {} values.".format(len(dummy)))
 		current.close()
-		print("Done!")
+		print("Done!\n")
 
 	#####################################################################
 	# 'listvals' has all the x, y, and z coordinates for the top & bottom inlets
@@ -199,7 +198,7 @@ def generateInlet(data, scheme, PLOT, STATUS):
 		matvals[:,i] = np.concatenate(listvals[2*i:2*(i+1)])*conversion
 	print("Done!")
 	if (STATUS == True):
-		print("\tThere are a total of {} cell centers ({} for '{}' and {} for '{}')".format(
+		print("There are a total of {} cell centers ({} for '{}' and {} for '{}')".format(
 			nCells, nTopCells, patches[0], nBottomCells, patches[1]))
 
 	#####################################################################
@@ -214,11 +213,17 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	#####################################################################
 	# Load in the data for interpolation
 	#####################################################################
-	print("Reading inlet data from '{}'... ".format(projectPATH+'/data/'+data), end='')
+	print("Reading inlet data from '{}'... ".format(projectPATH+'/data/'+data), end='\n')
 	lines = readin(projectPATH+'/data/'+data, skip=5)
 	cols = np.array(["x", "y", "z", "Vx", "U_x95", "Vy", "U_y95", "Vz", "U_z95",
 		"RMSVx", "RMSVxUpper", "RMSVxLower", "RMSVy", "RMSVyUpper", "RMSVyLower",
 		"RMSVz", "RMSVzUpper", "RMSVzLower", "k", "kLOWER", "kUPPER"])
+	# Remove the black lines at the end of the file
+	for i in range(len(lines))[::-1]:
+		if (lines[i].strip() == ''):
+			del lines[-1]
+		else:
+			break
 	nRows = len(lines)
 	nCols = len(cols)
 
@@ -226,6 +231,7 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	matdata = np.zeros([nRows, nCols])
 	for i in range(len(lines)):
 		matdata[i,:] = np.fromstring(lines[i], sep='\t')
+		# print(i, matdata[i,:]) # Data verification purposes
 
 	##########
 	# 'posdata' contains the non-uniform grid data for the position
@@ -234,23 +240,31 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	# 'veldata' contains the corresponding velocity component values
 	# 'uveldata' holds the standard deviation of velocity in the x, y, and z
 	##########
-
 	posdata = np.zeros([nRows, 2])
 	veldata = np.zeros([nRows, 3])
 	uveldata = np.zeros([nRows, 3])
 	kdata = np.zeros(nRows)
 	ukdata = np.zeros([nRows, 2])
+	print('  *Assuming 95% confidence means exactly 2 standard deviations (which is actually 95.45%)')
 	# Extract the needed position and velocity data
+	fmt = '%+.5e'
 	for i in range(nRows):
 		posdata[i,:] = np.array([matdata[i,1], matdata[i,2]])
 		kdata[i] = np.array([matdata[i,18]])
 		ukdata[i,:] = np.array([matdata[i,19], matdata[i,20]])
-		veldata[i,:] = np.array([matdata[i,5], matdata[i,7], matdata[i,9]])
-		uveldata[i,:] = np.array([matdata[i,6], matdata[i,8], matdata[i,10]])/2
-		if (STATUS == True): print("Position:", posdata[i], "Velocity:", veldata[i], "K:", kdata[i])
+		veldata[i,:] = np.array([matdata[i,3], matdata[i,5], matdata[i,7]])
+		uveldata[i,:] = np.array([matdata[i,4], matdata[i,6], matdata[i,8]])/2
+		if (STATUS == True):
+			if (i == 0):
+				print("Data from {} includes:".format(projectPATH+'/data/'+data))
+			print(i, "Position (y,z): {}, {}".format(fmt%posdata[i,0],fmt%posdata[i,1]))
+			print("\tVelocity x: {} +- {}".format(fmt%veldata[i,0],fmt%uveldata[i,0]))
+			print("\tVelocity y: {} +- {}".format(fmt%veldata[i,1],fmt%uveldata[i,1]))
+			print("\tVelocity z: {} +- {}".format(fmt%veldata[i,2],fmt%uveldata[i,2]))
+			print("\tk (lower,upper): {} ({}, {})".format(fmt%kdata[i],fmt%ukdata[i,0],fmt%ukdata[i,1]))
+			if (i == nRows-1):
+				print("There are a total of {} inlet data points.".format(i))
 	print("Done!")
-	print('  *Assuming 95% confidence means exactly 2 standard deviations (which is actually 95.45%)')
-
 	#####################################################################
 
 	##########################################################################
@@ -323,7 +337,7 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	f.write('{}\n'.format(nTopCells))
 	f.write('(\n')
 	for i in range(nTopCells):
-		f.write('({} {} {})\n'.format(fmt%(factorV*newVx[i]), fmt%(factorV*newVy[i]), fmt%(factorV*newVz[i])))
+		f.write('({} {} {})\n'.format(fmt%(newVx[i]), fmt%(newVy[i]), fmt%(newVz[i])))
 	f.write(')\n')
 	f.write(';\n')
 	# Continue onto the bottom inlet
@@ -335,7 +349,7 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	f.write('{}\n'.format(nTopCells))
 	f.write('(\n')
 	for i in range(nTopCells,nCells):
-		f.write('({} {} {})\n'.format(fmt%(factorV*newVx[i]), fmt%(factorV*newVy[i]), fmt%(factorV*newVz[i])))
+		f.write('({} {} {})\n'.format(fmt%(newVx[i]), fmt%(newVy[i]), fmt%(newVz[i])))
 	f.write(')\n')
 	f.write(';\n')
 	# Finish the rest of the file
@@ -382,7 +396,7 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	f.write('{}\n'.format(nTopCells))
 	f.write('(\n')
 	for i in range(nTopCells):
-		f.write('{}\n'.format(fmt%(factorK*newK[i])))
+		f.write('{}\n'.format(fmt%(newK[i])))
 	f.write(')\n')
 	f.write(';\n')
 	for i in np.arange(topEndPos,botStartPos+1):
@@ -392,7 +406,7 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	f.write('{}\n'.format(nTopCells))
 	f.write('(\n')
 	for i in range(nTopCells,nCells):
-		f.write('{}\n'.format(fmt%(factorK*newK[i])))
+		f.write('{}\n'.format(fmt%(newK[i])))
 	f.write(')\n')
 	f.write(';\n')
 	for i in np.arange(botEndPos,len(lines)):
@@ -406,5 +420,5 @@ def generateInlet(data, scheme, PLOT, STATUS):
 			'kdata', 'newVx', 'newVy', 'newVz', 'newK'])
 		for f in plotData:
 			np.savetxt('inletPlotData/'+f, eval(f), delimiter=',')
-		# Runs a python script to plot the data
+		# Runs a python script in the background to plot the data
 		os.system('python3 inletPlot.py &')
