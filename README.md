@@ -9,6 +9,9 @@ Has command line options for
 * number of volumes (split into x_inlet, x_mixing, y and z) 
 * turbulence model (k-Epsilon or k-Omega) 
 * switch for running in 3D 
+* select the inlet velocity data (0.6 or 1)
+* select the method used for inlet data interpolation (nearest|linear|cubic)
+     *** 'linear' is reccommended (and default) for now, plan to add a b-spline interpolation method
 
 See ./run -h for help. 
 
