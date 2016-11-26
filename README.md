@@ -11,7 +11,7 @@ Has command line options for
 * switch for running in 3D 
 * select the inlet velocity data (0.6 or 1)
 * select the method used for inlet data interpolation (nearest|linear|cubic)
-     *** 'linear' is reccommended (and default) for now, plan to add a b-spline interpolation method
+    'linear' is recommended (and default) for now, plan to add a b-spline interpolation method
 
 See ./run -h for help. 
 
