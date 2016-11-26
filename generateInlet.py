@@ -96,8 +96,6 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	data = ''.join(data)
 	scheme = ''.join(scheme)
 	
-	factorV = 10
-	factorK = 1
 	conversion = 1000
 
 	# Reinitializes the data file name
@@ -338,7 +336,7 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	f.write('{}\n'.format(nTopCells))
 	f.write('(\n')
 	for i in range(nTopCells):
-		f.write('({} {} {})\n'.format(fmt%(factorV*newVx[i]), fmt%(factorV*newVy[i]), fmt%(factorV*newVz[i])))
+		f.write('({} {} {})\n'.format(fmt%(newVx[i]), fmt%(newVy[i]), fmt%(newVz[i])))
 	f.write(')\n')
 	f.write(';\n')
 	# Continue onto the bottom inlet
@@ -350,7 +348,7 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	f.write('{}\n'.format(nTopCells))
 	f.write('(\n')
 	for i in range(nTopCells,nCells):
-		f.write('({} {} {})\n'.format(fmt%(factorV*newVx[i]), fmt%(factorV*newVy[i]), fmt%(factorV*newVz[i])))
+		f.write('({} {} {})\n'.format(fmt%(newVx[i]), fmt%(newVy[i]), fmt%(newVz[i])))
 	f.write(')\n')
 	f.write(';\n')
 	# Finish the rest of the file
@@ -397,7 +395,7 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	f.write('{}\n'.format(nTopCells))
 	f.write('(\n')
 	for i in range(nTopCells):
-		f.write('{}\n'.format(fmt%(factorK*newK[i])))
+		f.write('{}\n'.format(fmt%(newK[i])))
 	f.write(')\n')
 	f.write(';\n')
 	for i in np.arange(topEndPos,botStartPos+1):
@@ -407,7 +405,7 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	f.write('{}\n'.format(nTopCells))
 	f.write('(\n')
 	for i in range(nTopCells,nCells):
-		f.write('{}\n'.format(fmt%(factorK*newK[i])))
+		f.write('{}\n'.format(fmt%(newK[i])))
 	f.write(')\n')
 	f.write(';\n')
 	for i in np.arange(botEndPos,len(lines)):
