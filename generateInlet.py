@@ -213,7 +213,7 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	#####################################################################
 	# Load in the data for interpolation
 	#####################################################################
-	print("Reading inlet data from '{}'... ".format(projectPATH+'/data/'+data), end='')
+	print("Reading inlet data from '{}'... ".format(projectPATH+'/data/'+data), end='\n')
 	lines = readin(projectPATH+'/data/'+data, skip=5)
 	cols = np.array(["x", "y", "z", "Vx", "U_x95", "Vy", "U_y95", "Vz", "U_z95",
 		"RMSVx", "RMSVxUpper", "RMSVxLower", "RMSVy", "RMSVyUpper", "RMSVyLower",
@@ -231,6 +231,7 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	matdata = np.zeros([nRows, nCols])
 	for i in range(len(lines)):
 		matdata[i,:] = np.fromstring(lines[i], sep='\t')
+		# print(i, matdata[i,:]) # Data verification purposes
 
 	##########
 	# 'posdata' contains the non-uniform grid data for the position
@@ -251,12 +252,12 @@ def generateInlet(data, scheme, PLOT, STATUS):
 		posdata[i,:] = np.array([matdata[i,1], matdata[i,2]])
 		kdata[i] = np.array([matdata[i,18]])
 		ukdata[i,:] = np.array([matdata[i,19], matdata[i,20]])
-		veldata[i,:] = np.array([matdata[i,5], matdata[i,7], matdata[i,9]])
-		uveldata[i,:] = np.array([matdata[i,6], matdata[i,8], matdata[i,10]])/2
+		veldata[i,:] = np.array([matdata[i,3], matdata[i,5], matdata[i,7]])
+		uveldata[i,:] = np.array([matdata[i,4], matdata[i,6], matdata[i,8]])/2
 		if (STATUS == True):
 			if (i == 0):
 				print("Data from {} includes:".format(projectPATH+'/data/'+data))
-			print("Position (y,z): {}, {}".format(fmt%posdata[i,0],fmt%posdata[i,1]))
+			print(i, "Position (y,z): {}, {}".format(fmt%posdata[i,0],fmt%posdata[i,1]))
 			print("\tVelocity x: {} +- {}".format(fmt%veldata[i,0],fmt%uveldata[i,0]))
 			print("\tVelocity y: {} +- {}".format(fmt%veldata[i,1],fmt%uveldata[i,1]))
 			print("\tVelocity z: {} +- {}".format(fmt%veldata[i,2],fmt%uveldata[i,2]))
