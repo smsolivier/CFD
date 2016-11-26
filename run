@@ -24,7 +24,7 @@ from generateInlet import *
 		turbulence modeling 
 ''' 
 
-# get command line values 
+# get command line values 	
 # description
 parser = argparse.ArgumentParser(description='run interFoam in parallel')
 # number of processors in x, y, z 
@@ -53,11 +53,16 @@ parser.add_argument('-setupOnly', action='store_true', help='run setup commands 
 parser.add_argument('-cont', action='store_false', help='continue from latest time')
 # use simple geometry 
 parser.add_argument('-simple', action='store_true', help='use geometry without angled inlets')
+# run readFoam.py to compare answer to data 
+parser.add_argument('-readFoam', action='store_true', help='run readFoam.py to plot the answer and experimental data')
+# specify which case to run 
+parser.add_argument('-case', type=int, default=0, help='0: N339, 1: N337, 2: N320')
 
 
 
 ####################### My Changes ########################
-parser.add_argument('-condition', nargs=1, default='1.0', metavar='inletVelocity', help = 'Specify the inlet velocity (0.6|1.0)')
+# specify case instead 
+# parser.add_argument('-condition', nargs=1, default='1.0', metavar='inletVelocity', help = 'Specify the inlet velocity (0.6|1.0)')
 parser.add_argument('-interpolation', nargs=1, default='linear', metavar='scheme', help = 'Specify the interpolation method to be used on the inlet conditions (nearest|linear|cubic)\nI plan to add a b-spline interpolation method')
 parser.add_argument('-PLOT', action='store_true', help='Show plots of the inlet cell centers and the corresponding interpolated inlet conditions')
 parser.add_argument('-STATUS', action='store_true', help='Display the status of the run')
@@ -68,11 +73,11 @@ args = parser.parse_args()
 
 ####################### My Changes ########################
 # Double check that the input arguments are valid
-if not(''.join(args.condition) == '0.6'
-	   or ''.join(args.condition) == '.6'
-	   or ''.join(args.condition) == '1.0'
-	   or ''.join(args.condition) == '1'):
-	error('Invalid inlet condition - use either \'0.6\' or \'1.0\'')
+# if not(''.join(args.condition) == '0.6'
+# 	   or ''.join(args.condition) == '.6'
+# 	   or ''.join(args.condition) == '1.0'
+# 	   or ''.join(args.condition) == '1'):
+# 	error('Invalid inlet condition - use either \'0.6\' or \'1.0\'')
 if not(''.join(args.interpolation) == 'nearest'
 	   or ''.join(args.interpolation) == 'linear'
 	   or ''.join(args.interpolation) == 'cubic'):
@@ -180,6 +185,17 @@ else: # use better geometry
 	out.write(string)
 	out.close()
 
+# --- case selection --- 
+inletVelocity = '' 
+if (args.case == 0): # N339, .6 m/s 
+	inletVelocity = '.6' 
+
+elif (args.case == 1): # N337, 1 m/s 
+	inletVelocity = '1' 
+
+elif (args.case == 2): # N320, .6 m/s 
+	inletVelocity = '.6'
+
 
 # --- run commands --- 
 def runcmd(cmd):
@@ -196,10 +212,17 @@ if (args.cont):
 	if (os.path.isfile('0/yPlus')): # remove previous yPlus 
 		runcmd('rm 0/yPlus')
 
+	# remove 0/V 
+	if (os.path.isfile('0/V')):
+		runcmd('rm 0/V')
+
+	if (os.path.isfile('0/ccx')):
+		runcmd('rm 0/ccx 0/ccy 0/ccz')
+
 	runcmd('blockMesh') # generate mesh 
 
 	####################### My Changes ########################
-	generateInlet(args.condition, args.interpolation, args.PLOT, args.STATUS)
+	# generateInlet(inletVelocity, args.interpolation, args.PLOT, args.STATUS)
 	###########################################################	
 
 if (not(args.setupOnly)): # run if not in setupOnly mode 
@@ -224,3 +247,7 @@ time, str = tt.stop() # end timer
 if (time > 60 and ALERT):
 	os.system('notify-send --urgency=low -i " " "openfoam done" \
 		"run completed in %s"' % (str))
+
+# compare to experimental results 
+if (args.readFoam):
+	runcmd('./readFoam.py %s' % (args.case))

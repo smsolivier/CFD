@@ -63,6 +63,10 @@ def parse(xinterp, PLOT=False):
 	# --- get position --- 
 	files = ['ccx', 'ccy', 'ccz'] # name of cell center files in 0 dir 
 
+	# make sure files exist 
+	if (not(os.path.isfile(initDir+files[0]))):
+		os.system('writeCellCentres')
+
 	r = np.zeros((N,len(files))) # stores position vector 
 
 	for i in range(len(files)): # loop through cell center files 
@@ -136,20 +140,30 @@ def parse(xinterp, PLOT=False):
 		plt.title(str(xinterp))
 		plt.show()
 
+	# write to file 
+	f = open('misc/readFoam_' + str(xinterp) + '.txt', 'w')
+	for i in range(len(y1)):
+		f.write(str(y1[i]) + ' ' + str(uinterp[i]) + ' \n')
+
+	f.close()
+
 	return y1, uinterp 
 
 if __name__ == '__main__':
 
-	# get correct file names according to case 
-	case = 2
+	import sys 
 
-	if (case == 0):
+	case = 0 
+	if (len(sys.argv) == 2):
+		case = int(sys.argv[1]) # get command line case 
+
+	if (case == 2):
 		pre = 'N320/'
 		post = '_PIV_dr1_u06.dat'
 	elif (case == 1):
 		pre = 'N337/'
 		post = '_PIV_dr0_u10.dat'
-	elif (case == 2):
+	elif (case == 0):
 		pre = 'N339/'
 		post = '_PIV_dr0_u06.dat'
 
