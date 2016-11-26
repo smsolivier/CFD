@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -77,8 +77,8 @@ def getTime():
 			if (run == 1):
 				plt.pause(1)
 				fig.clear()
-			# if (run == 0):
-			# 	plt.show()
+			if (run == 0):
+				plt.show()
 
 	# exit nicely on ctrl-c 
 	except KeyboardInterrupt: 

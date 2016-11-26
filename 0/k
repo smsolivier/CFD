@@ -17,48 +17,20 @@ FoamFile
 
 dimensions      [0 2 -2 0 0 0 0];
 
-internalField   uniform .002;
+internalField   uniform .0027;
 
 boundaryField
 {
     topInlet
     {
         type            fixedValue;
-        value           nonuniform List<scalar>
-10
-(
-0.003833306923715
-0.003871185003950
-0.002993060338714
-0.002820033482388
-0.002750960111376
-0.002837649475341
-0.002890036733118
-0.003656563184306
-0.004179345001000
-0.000883615263441
-)
-;
+        value           $internalField; 
     }
 
     bottomInlet
     {
         type            fixedValue;
-        value           nonuniform List<scalar>
-10
-(
-0.000883615263441
-0.004179345001000
-0.003541632151064
-0.002928506127558
-0.002837649475341
-0.002785523197613
-0.002831681271304
-0.002999418913900
-0.003871185003950
-0.003833306923715
-)
-;
+        value           $internalField; 
     }
 
     outlet

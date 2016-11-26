@@ -212,6 +212,13 @@ if (args.cont):
 	if (os.path.isfile('0/yPlus')): # remove previous yPlus 
 		runcmd('rm 0/yPlus')
 
+	# remove 0/V 
+	if (os.path.isfile('0/V')):
+		runcmd('rm 0/V')
+
+	if (os.path.isfile('0/ccx')):
+		runcmd('rm 0/ccx 0/ccy 0/ccz')
+
 	runcmd('blockMesh') # generate mesh 
 
 	####################### My Changes ########################

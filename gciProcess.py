@@ -8,7 +8,7 @@ import sys
 
 import readFoam as rf 
 
-fname = 'data/gci.txt' # name of file to read GCI run data from 
+fname = 'misc/gci.txt' # name of file to read GCI run data from 
 
 # get correct file names according to case 
 case = 2
@@ -78,4 +78,4 @@ if (np.fabs(p - 2)/2 < .1):
 
 sigma = Fs/(r12**p - 1)*np.fabs(f2 - f1)
 
-print(p, sigma)
+print(p, f1, sigma)
