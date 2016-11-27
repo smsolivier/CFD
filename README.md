@@ -16,9 +16,11 @@ Has command line options for
 See ./run -h for help. 
 
 ## Running on ada
-* load Python/3.5.2 
 * edit jobFile for wall time, number of processors, memory usage 
+* edit ./run command to include proper flags (don't plot anything on compute nodes) 
 * run bsub < jobFile to submit job 
+* bjobs to make sure submitted 
+* bpeek to check stdout and stderr 
 
 ## kEpsilon/kOmega
 Contains fvSchemes, fvSolution, turbulenceProperties files corresponding to k-Epsilon or k-Omega. 
