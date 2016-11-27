@@ -47,9 +47,7 @@ boundaryField
     {
         // type            fixedValue;
         // value           $internalField;
-        // type zeroGradient; 
-        type fixedFluxPressure; 
-        value uniform 0; 
+        type zeroGradient; 
     }
 
     reflecting
