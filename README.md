@@ -1,5 +1,12 @@
 # CFD
 NUEN 489 GEMIX Project
+## To Do 
+* Update inlet to write boundary conditions for omega, epsilon using formulas 
+* No mixing 
+* GCI 
+* Compute omega figure of merit 
+* simpleFoam comparison to make sure interFoam isn't buggy 
+* Sensitivity analysis
 
 ## run 
 Python script to run interFoam in parallel. 
@@ -61,11 +68,4 @@ df, names = rpv.read('output.csv', 'U:0', 'U:1', 'U:2', 'Points:1')
 returns the columns of data corresponding to U:0, U:1, U:2, Points:1 and a list of the header names. 
 
 ## clean 
-bash script to remove OpenFOAM generated files. 
-
-## Current Problems
-* boundary conditions for omega, currently 1e7 at walls
-* boundary conditions for k 
-* inlet conditions from data 
-* top and bottom inlets not mixing 
-* flow is currently not turbulent 
+bash script to remove OpenFOAM generated files.  
