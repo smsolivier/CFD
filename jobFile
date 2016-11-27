@@ -11,5 +11,6 @@
 # commands to run 
 module load OpenFOAM/4.0-intel-2016b 
 source /general/software/x86_64/easybuild/software/OpenFOAM/4.0-intel-2016b/OpenFOAM-4.0/etc/bashrc 
+module load Python/3.5.2-intel-2016b
 
 ./run -np 5 2 2 -N 20 40 40 40 -threeD -quiet 
