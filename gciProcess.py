@@ -6,9 +6,59 @@ import matplotlib.pyplot as plt
 import os 
 import sys 
 
+from scipy.interpolate import interp1d 
+from scipy.integrate import quadrature 
+import scipy.integrate as integrate 
+
 import readFoam as rf 
 
-fname = 'misc/gci.txt' # name of file to read GCI run data from 
+def calcGCI(f1, f2, f3, r12, r23, tol=1e-6):
+	''' computes observed order of convergence and sigma from 
+		non uniform refinement 
+	''' 
+	converged = 0 
+	pold = 2 
+	alpha = np.fabs((f3 - f2)/(f2 - f1)) 
+	while (not(converged)):
+		p = np.log(alpha* (r12**pold - 1)/(r23**pold - 1))/np.log(r12)
+
+		if (np.fabs(p - pold)/p < tol):
+			converged = 1 
+
+		pold = p 
+
+	Fs = 3 
+	if (np.fabs(p - 2)/2 < .1):
+		Fs = 1.25 
+
+	sigma = Fs/(r12**p - 1) * np.fabs(f1 - f2) 
+
+	return p, sigma 
+
+def calcOmega(u_sim, sigma_sim, u_ex, sigma_ex):
+	a = 1/(2*sigma_sim*np.sqrt(np.pi))
+	b = lambda x: ((x - u_ex)/sigma_ex)**2 
+	c = lambda x: ((x - u_sim)/sigma_sim)**2 
+
+	omega = lambda x: a * np.exp(-1/4*(b(x) + c(x)))
+
+	# x = np.linspace(u_sim-1, u_sim+1, 100)
+	# plt.plot(x, omega(x))
+	# plt.title(str(u_sim/u_ex))
+	# plt.show()
+
+	print(u_sim/u_ex, sigma_sim/sigma_ex)
+	# Omega, err = quadrature(omega, u_sim-1, u_sim+1)
+	Omega = integrate.quad(omega, -np.inf, np.inf)
+
+	# print('Omega =', Omega, 'Error =', err)
+
+	return Omega[0] 
+
+
+dirName = 'gciData/' # name of file to read GCI run data from 
+
+dirs = sorted(os.listdir(dirName)) # get list of directory names 
 
 # get correct file names according to case 
 case = 2
@@ -31,51 +81,66 @@ d = np.array([.05, .15, .25, .35, .45])
 # --- read in experimental data --- 
 # y_ex stores all y values for all distances 
 # u_ex stores Ux for all distances 
+# sigma_ex stores U_x95 
 for i in range(len(dist)):
 	# read in experimental data 
-	df = np.loadtxt(pre+dist[i]+post, skiprows=5, usecols=(0,1,2)) # x, y, Vx
+	df = np.loadtxt(pre+dist[i]+post, skiprows=5, usecols=(1,2,3)) # y, Vx, U_x95
 
 	if (i==0):
 		y_ex = np.zeros((len(dist), np.shape(df)[0]))
 		u_ex = np.zeros((len(dist), np.shape(df)[0]))
+		sigma_ex = np.zeros((len(dist), np.shape(df)[0]))
 
-	y_ex[i,:] = df[:,1]
-	u_ex[i,:] = -df[:,2] 
+	y_ex[i,:] = df[:,0]
+	u_ex[i,:] = -df[:,1] 
+	sigma_ex[i,:] = df[:,2]
 
-def calcGCI(f1, f2, f3, r12, r23, tol=1e-6):
-	converged = 0 
-	pold = 2 
-	alpha = np.fabs((f3 - f2)/(f2 - f1)) 
-	while (not(converged)):
-		p = np.log(alpha* (r12**pold - 1)/(r23**pold - 1))/np.log(r12)
+# read in gciRun data, interpolate to common grid, do gci on each grid point 
+for j in range(len(dirs)): # loop through time directories 
+	N = np.zeros(3) 
 
-		if (np.fabs(p - pold)/p < tol):
-			converged = 1 
+	grid = y_ex[j,:]/1000
+	# grid = np.linspace(-.024, .024, 50)
+	U = np.zeros((3,len(grid)))
+	for i in range(3): # loop through number of runs 
+		fname = dirName + dirs[j] + '/run'+str(i)+'.txt'
+		f = open(fname, 'r')
+		N[i] = float(f.readline().strip())
 
-		pold = p 
+		y, u = np.loadtxt(fname, skiprows=1, unpack=True)
 
-	return p 
+		# U[i,:] = np.interp(grid, y, u) # interpolate onto grid 
+		U[i,:] = interp1d(y, u, kind='cubic')(grid) 
 
-# get refinement factor 
-f = open(fname, 'r')
-r = f.readline().split() # refinement factors 
-f.close()
-r12 = float(r[0])
-r23 = float(r[1])
+	r12 = (N[0]/N[1])**(1/2)
+	r23 = (N[1]/N[2])**(1/2) 
+
+	n = len(grid) # number of grid points 
+	p = np.zeros(n) # store convergence for each velocity point 
+	sigma = np.zeros(n) # store uncertainty 
+	Omega = np.zeros(n)
+	for i in range(n):
+		p[i], sigma[i] = calcGCI(U[0,i], U[1,i], U[2,i], r12, r23) 
+
+		# Omega[i] = calcOmega(U[0,i], np.fabs(sigma[i]), u_ex[j,i], sigma_ex[j,i])
+		Omega[i] = calcOmega(U[0,i], sigma[i], u_ex[j,i], sigma_ex[j,i])
 
 
-ef = np.loadtxt(fname, skiprows=1) # gci data: y values, run 1, run 2, run 3
+	print(Omega)
 
-f1 = np.mean(ef[:,1]) 
-f2 = np.mean(ef[:,2])
-f3 = np.mean(ef[:,3]) 
+	# average velocity GCI 
+	f1 = np.mean(U[0,:])
+	f2 = np.mean(U[1,:])
+	f3 = np.mean(U[2,:])
 
-p = calcGCI(f1, f2, f3, r12, r23)
+	pmean, sigmaMean = calcGCI(f1, f2, f3, r12, r23)
 
-Fs = 3 
-if (np.fabs(p - 2)/2 < .1):
-	Fs = 1.25 
+	# calcOmega(f1, sigmaMean, np.mean(u_ex[j,:]), np.mean(sigma_ex[j,:]))
+	print(d[j], 'p =', pmean, 'Uavg =', f1, '+-', sigmaMean)
 
-sigma = Fs/(r12**p - 1)*np.fabs(f2 - f1)
+	plt.subplot(np.ceil(len(dirs)/2), 2, j+1)
+	plt.errorbar(grid*1000, U[0,:], yerr=sigma)
+	plt.plot(y_ex[j,:], u_ex[j,:])
+	plt.title(dirs[j])
 
-print(p, f1, sigma)
+plt.show()

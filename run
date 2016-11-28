@@ -97,7 +97,7 @@ Nx2 = int(args.N[1])
 Ny = int(args.N[2])
 Nz = int(args.N[3])
 
-NVols = (Nx1 + Nx2) * Ny * Nz 
+NVols = (Nx1 + Nx2) * 2*Ny * Nz 
 
 # --- change turbulence model --- 
 turbDir = 'kOmega/' # default model 

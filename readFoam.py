@@ -141,6 +141,9 @@ def parse(xinterp, PLOT=False):
 		plt.show()
 
 	# write to file 
+	if (not(os.path.isdir('misc'))):
+		os.makedirs('misc') 
+		
 	f = open('misc/readFoam_' + str(xinterp) + '.txt', 'w')
 	for i in range(len(y1)):
 		f.write(str(y1[i]) + ' ' + str(uinterp[i]) + ' \n')
