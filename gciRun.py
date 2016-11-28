@@ -12,7 +12,9 @@ import Timer
 
 import readFoam as rf 
 
-tt = Timer.timer()
+''' runs ./run 3 times and writes y profile at each experimental distance ''' 
+
+tt = Timer.timer() # start timer 
 
 def handleOF(xinterp, grid):
 	''' read OpenFoam output with readFoam at xinterp 
@@ -26,6 +28,7 @@ def handleOF(xinterp, grid):
 	return uinterp 
 
 def readOF(xinterp):
+	''' read openfoam data to extract Ux profile at xinterp ''' 
 	y, u = rf.parse(xinterp)
 
 	return y, u 
@@ -36,8 +39,9 @@ grid = np.linspace(-.025, .025, 30)
 d = np.array([.05, .15, .25, .35, .45]) # distances to interpolate 
 
 # set up three runs 
+# number of volumes
 Nx1 = np.array([15, 15, 15])
-Nx2 = np.array([60, 50, 40])
+Nx2 = np.array([40, 30, 20])
 Ny = np.array([40, 30, 20])
 # Nx2 = np.array([10, 10, 10])
 # Ny = np.array([10,10,10])
@@ -64,6 +68,7 @@ for i in range(len(N)): # loop through three runs
 	if (x != 0): # exit if problems 
 		sys.exit()
 
+	# print all data points at each distance 
 	for j in range(len(d)):
 		currentDir = dataDir + '/' + str(d[j])[2:] 
 
@@ -77,6 +82,8 @@ for i in range(len(N)): # loop through three runs
 
 		u_of[i,j,:] = handleOF(d[j], grid) 
 
+# print interpolated common grid points for each time 
+# puts all three runs on the same grid in one file 
 for i in range(len(d)):
 
 	currentDir = dataDir + '/' + str(d[i])[2:] 
@@ -85,13 +92,13 @@ for i in range(len(d)):
 	f.write(str(N[0]) + ' ' + str(N[1]) + ' ' + str(N[2]) + '\n') # write number of volumes at top 
 	fmt = '{:<10e}'
 	for j in range(len(grid)):
-		f.write(fmt.format(grid[j]) + ' ') 
+		f.write(fmt.format(grid[j]) + ' ') # write the y points 
 
 		for k in range(3): # loop through 3 runs 
-			f.write(fmt.format(u_of[k,i,j]) + ' ')
+			f.write(fmt.format(u_of[k,i,j]) + ' ') # write Ux for each run 
 
 		f.write('\n')
 
 	f.close()
 
-tt.stop()
+tt.stop() # stop timer 
