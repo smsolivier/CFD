@@ -11,34 +11,6 @@ from scipy.integrate import quadrature
 import scipy.integrate as integrate 
 from scipy.stats import norm
 
-def calcGCI(f1, f2, f3, N, tol=1e-6):
-	''' computes observed order of convergence and sigma from 
-		non uniform refinement 
-	'''
-
-	# calculate refinement factor 
-	r12 = (N[0]/N[1])**(1/3)
-	r23 = (N[1]/N[2])**(1/3) 
-
-	converged = 0 
-	pold = 2 
-	alpha = np.fabs((f3 - f2)/(f2 - f1)) 
-	while (not(converged)):
-		p = np.log(alpha* (r12**pold - 1)/(r23**pold - 1))/np.log(r12)
-
-		if (np.fabs(p - pold)/p < tol):
-			converged = 1 
-
-		pold = p 
-
-	Fs = 3 
-	if (np.fabs(p - 2)/2 < .1):
-		Fs = 1.25 
-
-	sigma = Fs/(r12**p - 1) * np.fabs(f1 - f2) 
-
-	return p, sigma 
-
 def gaussian(mu, sigma):
 	''' return gaussian with average mu and variance sigma^2 ''' 
 	
@@ -120,6 +92,53 @@ def readExperiment(case, dist):
 
 	return y_ex, u_ex, sigma_ex, k, ksigma 
 
+def calcGCI(f, N, tol=1e-6):
+	''' computes observed order of convergence and sigma from 
+		non uniform refinement 
+	'''
+
+	f1 = f[0]
+	f2 = f[1]
+	f3 = f[2] 
+
+	# check for oscillatory convergence 
+	if (f2/f1  - 1> 0 and f2/f3  - 1> 0) or (f2/f1  - 1< 0 and f2/f3  - 1< 0):
+		print('oscillatory convergence', f2/f1, f2/f3)
+
+	# check if f increasing with N 
+	elif (f1 > f2 > f3):
+		print('Increasing trend')
+
+	# asymptotic convergence, good for GCI  
+	elif (f1 < f2 < f3):
+		print('ok')
+
+	else:
+		print('unknown behavior')
+
+	# calculate refinement factor 
+	r12 = (N[0]/N[1])**(1/3)
+	r23 = (N[1]/N[2])**(1/3) 
+
+	converged = 0 
+	pold = 2 
+	alpha = np.fabs((f3 - f2)/(f2 - f1)) 
+	while (not(converged)):
+		p = np.log(alpha* (r12**pold - 1)/(r23**pold - 1))/np.log(r12)
+
+		if (np.fabs(p - pold)/p < tol):
+			converged = 1 
+
+		pold = p 
+
+	Fs = 3 
+	if (np.fabs(p - 2)/2 < .1):
+		Fs = 1.25 
+
+	sigma = Fs/(r12**p - 1) * np.fabs(f1 - f2) 
+
+	return p, sigma 
+
 def readGCI(dr, grid):
 	''' read in data from runGCI 
 		interpolates onto grid 
@@ -145,14 +164,15 @@ def readGCI(dr, grid):
 		fname = dr + '/run'+str(i)+'.txt'
 		f = open(fname, 'r')
 		N[i] = float(f.readline().strip())
+		f.close()
 
 		# read in data 
 		y, u, k, c = np.loadtxt(fname, skiprows=1, unpack=True)
 
 		# interpolate onto grid 
-		# U[i,:] = np.interp(grid, y, u) # interpolate onto grid 
+		U[i,:] = np.interp(grid, y, u) # interpolate onto grid 
 		Ufunc = interp1d(y, u, kind='cubic') # interpolated function 
-		U[i,:] = Ufunc(grid) 
+		# U[i,:] = Ufunc(grid) 
 		kfunc = interp1d(y, k, kind='cubic') # interpolated function, used for integration 
 		K[i,:] = kfunc(grid) # interpolate k onto grid 
 		C[i,:] = interp1d(y, c, kind='cubic')(grid)
@@ -160,11 +180,13 @@ def readGCI(dr, grid):
 		centerU[i] = U[i,cent] # centerline Ux 
 		centerk[i] = K[i,cent] # centerline k 
 
-	pU, sigmaU = calcGCI(centerU[0], centerU[1], centerU[2], N) 
+	pU, sigmaU = calcGCI(centerU, N) 
 
 	print('pU =', pU, 'U =', centerU[0], sigmaU)
 
-	pk, sigmak = calcGCI(centerk[0], centerk[1], centerk[2], N) 
+	pk, sigmak = calcGCI(centerk, N) 
+
+	print('pk =', pk, 'k =', centerk[0], sigmak)
 
 	return U[0,:], 2*sigmaU*np.ones(len(grid)), K[0,:], 2*sigmak*np.ones(len(grid)) 
 
@@ -243,7 +265,9 @@ beta = 1
 
 case = 0
 dist = ['050', '150', '250', '350', '450'] 
-gciDir = 'adaData/'
+# dist = ['050']
+gciDir = 'gciData/'
+# gciDir = 'adaData/'
 subDirs = sorted(os.listdir(gciDir)) # get list of subdirectories in gciDir 
 
 fig1 = plt.figure()
