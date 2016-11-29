@@ -36,10 +36,10 @@ def calcGCI(f1, f2, f3, r12, r23, tol=1e-6):
 
 def gaussian(mu, sigma):
 	''' return gaussian with average mu and variance sigma^2 ''' 
-	f = lambda x: 1/(np.sqrt(2*sigma**2*np.pi))*np.exp(
-		-1/2*((x-mu)/sigma)**2)
+	
+	f = lambda x: 1/np.sqrt(2*sigma**2*np.pi) * np.exp(
+		-1*(x - mu)**2/(2*sigma**2))
 
-	# f = lambda x: 1/(sigma*np.sqrt(2*np.pi))*np.exp(-1/2*((x - mu)/sigma)**2)
 
 	return f 
 
@@ -56,15 +56,26 @@ def calcOmega(u_sim, sigma_sim, u_ex, sigma_ex):
 	# plt.title(str(u_sim/u_ex))
 	# plt.show()
 
-	x = np.linspace(u_sim - .5, u_sim + .5, 100)
-	f_ex = gaussian(u_ex, sigma_ex)
-	f_sim = gaussian(u_sim, sigma_sim)
+	# x = np.linspace(u_sim - .5, u_sim + .5, 100)
+	# f_ex = gaussian(u_ex, sigma_ex/2)
+	# f_sim = gaussian(u_sim, sigma_sim)
 
-	# plt.plot(x, f_ex(x), label='ex')
-	# plt.plot(x, f_sim(x), label='sim')
-	# plt.plot(x, omega(x), label='omega')
-	# plt.legend(loc='best')
-	# plt.show()
+	x = np.linspace(norm.ppf(.01, u_sim, sigma_sim), 
+		norm.ppf(.99, u_sim, sigma_sim), 100)
+	f_ex = lambda x: norm.pdf(x, u_ex, sigma_ex/2) 
+	f_sim = lambda x: norm.pdf(x, u_sim, sigma_sim)
+
+	print(integrate.quad(f_ex, -np.inf, np.inf)) 
+	print(u_ex, sigma_ex)
+
+	plt.figure()
+	plt.axvline(u_ex)
+	plt.axvline(u_sim)
+	plt.plot(x, f_ex(x), label='ex')
+	plt.plot(x, f_sim(x), label='sim')
+	plt.plot(x, omega(x), label='omega')
+	plt.legend(loc='best')
+	plt.show()
 
 	# print(u_sim/u_ex, sigma_sim/sigma_ex)
 	# Omega, err = quadrature(omega, u_sim-1, u_sim+1)
@@ -72,7 +83,7 @@ def calcOmega(u_sim, sigma_sim, u_ex, sigma_ex):
 	# integrate omega(x) dx 
 	Omega = integrate.quad(omega, -np.inf, np.inf)
 
-	# print('Omega =', Omega, 'Error =', err)
+	print('Omega =', Omega[0], 'Error =', Omega[1])
 
 	return Omega[0] 
 
@@ -114,6 +125,9 @@ def readGCI(dr, grid, u_ex, sigma_ex, k_ex, ksigma_ex):
 	''' 
 	N = np.zeros(3) # store number of volumes for each run 
 
+	Ufunc_ex = interp1d(grid, u_ex, kind='cubic') # exact interpolated velocity 
+	centerU_ex = Ufunc_ex(0) 
+
 	U = np.zeros((3,len(grid))) # store velocities on grid 
 	K = np.zeros((3, len(grid))) # store k for each run on each grid point 
 	C = np.zeros((3, len(grid))) # store C for each run on each grid point 
@@ -130,7 +144,8 @@ def readGCI(dr, grid, u_ex, sigma_ex, k_ex, ksigma_ex):
 
 		# interpolate onto grid 
 		# U[i,:] = np.interp(grid, y, u) # interpolate onto grid 
-		U[i,:] = interp1d(y, u, kind='cubic')(grid) 
+		Ufunc = interp1d(y, u, kind='cubic') # interpolated function 
+		U[i,:] = Ufunc(grid) 
 		kfunc = interp1d(y, k, kind='cubic') # interpolated function, used for integration 
 		K[i,:] = kfunc(grid) # interpolate k onto grid 
 		C[i,:] = interp1d(y, c, kind='cubic')(grid)
@@ -144,9 +159,11 @@ def readGCI(dr, grid, u_ex, sigma_ex, k_ex, ksigma_ex):
 
 	pU, sigmaU = calcGCI(centerU[0], centerU[1], centerU[2], r12, r23) 
 
+	print('pU =', pU, 'U =', centerU[0], sigmaU)
+
 	pk, sigmak = calcGCI(centerk[0], centerk[1], centerk[2], r12, r23) 
 
-	Omega = calcOmega(centerU[0], sigmaU, u_ex[int(len(grid)/2)], sigma_ex[int(len(grid)/2)])
+	Omega = calcOmega(centerU[0], sigmaU, centerU_ex, sigma_ex[int(len(grid)/2)])
 
 	return U[0,:], 2*sigmaU*np.ones(len(grid)), Omega*np.ones(len(grid)) 
 
@@ -223,6 +240,8 @@ dist = ['050', '150', '250', '350', '450']
 gciDir = 'gciData/'
 subDirs = sorted(os.listdir(gciDir)) # get list of subdirectories in gciDir 
 
+fig1 = plt.figure()
+fig2 = plt.figure()
 for i in range(len(dist)):
 	y_ex, u_ex, sigma_ex, u, sigma, Omega, M = handle(
 		case = case, 
@@ -235,14 +254,13 @@ for i in range(len(dist)):
 
 	# print(Omega)
 
-	plt.subplot(np.ceil(len(dist)/2), 2, i+1) 
-	plt.errorbar(y_ex, u, yerr=sigma)
-	plt.plot(y_ex, u_ex)
-	plt.title('M = ' + str(M))
+	ax1 = fig1.add_subplot(np.ceil(len(dist)/2), 2, i+1) 
+	ax1.errorbar(y_ex, u, yerr=sigma)
+	ax1.plot(y_ex, u_ex)
+	ax1.set_title('M = ' + str(M))
 
-	# print('\n', i)
-	# for i in range(len(y_ex)):
-	# 	print(u[i], sigma[i], u_ex[i], sigma_ex[i])
+	ax2 = fig2.add_subplot(np.ceil(len(dist)/2), 2, i+1)
+	ax2.plot(y_ex, Omega)
 
 plt.show()
 
