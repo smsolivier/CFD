@@ -1,7 +1,6 @@
 #!/usr/bin/env python3 
 
 import numpy as np 
-import matplotlib.pyplot as plt 
 
 import os 
 import sys 
@@ -41,12 +40,20 @@ d = np.array([.05, .15, .25, .35, .45]) # distances to interpolate
 # set up three runs 
 # number of volumes
 Nx1 = np.array([15, 15, 15])
-Nx2 = np.array([60, 40, 20])
-Ny = np.array([20, 20, 20])
+Nx2 = np.array([140, 70, 35])
+Ny = np.array([30, 30, 30])
 # Nx2 = np.array([10, 10, 10])
 # Ny = np.array([10,10,10])
-# Nz = np.ones(3)*1
-Nz = np.array([20, 20, 20]) 
+Nz = np.ones(3)*1
+# Nz = np.array([20, 20, 20]) 
+
+''' case
+	0: N339, .6 m/s, same density 
+	1: N337, 1 m/s, same density 
+	2: N320, .6 m/s, different density 
+''' 
+
+case = 1
 
 # total volumes for each run 
 N = (Nx1+Nx2)*2*Ny*Nz # number of volumes 
@@ -63,11 +70,25 @@ for i in range(len(d)):
 		shutil.rmtree(currentDir) 
 	os.makedirs(currentDir) 
 
-# u_of = np.zeros((len(N), len(d), len(grid))) # store interpolated velocities 
+# write case to file 
+f = open(dataDir + '/case', 'w')
+f.write(str(case))
+f.close()
+
 # loop backwards so largest run is last (can run paraview on best run) 
-runstr = './run -N %s %s %s %s -quiet -threeD'
+runstr = './run -N %s %s %s %s -quiet'
+
 for i in range(len(N)-1, -1, -1): # loop through three runs 
-	x = os.system(runstr % (int(Nx1[i]), int(Nx2[i]), int(Ny[i]), int(Nz[i])))
+	runstr = './run -N {} {} {} {} -quiet -case {}'.format(
+		int(Nx1[i]), # inlet x 
+		int(Nx2[i]), # mixing x 
+		int(Ny[i]), # y vols in each half 
+		int(Nz[i]), # total z vols 
+		case # which case to run 
+		)
+
+	# run openfoam 
+	x = os.system(runstr)
 	if (x != 0): # exit if problems 
 		sys.exit()
 
@@ -82,33 +103,12 @@ for i in range(len(N)-1, -1, -1): # loop through three runs
 		for l in range(len(y)):
 			# write y, u, k, c 
 			f.write('{:<10e} {:<10e} {:<10e} {:<10e} \n'.format(
-				y[l], 
-				u[l],
-				k[l], 
-				C[l]
+				y[l], # grid points 
+				u[l], # velocities 
+				k[l], # turbelent kinetic energy 
+				C[l] # concentration 
 				)
 			)
 		f.close()
-
-		# u_of[i,j,:] = handleOF(d[j], grid) 
-
-# # print interpolated common grid points for each time 
-# # puts all three runs on the same grid in one file 
-# for i in range(len(d)):
-
-# 	currentDir = dataDir + '/' + str(d[i])[2:] 
-
-# 	f = open(currentDir+'/gci.txt', 'w')
-# 	f.write(str(N[0]) + ' ' + str(N[1]) + ' ' + str(N[2]) + '\n') # write number of volumes at top 
-# 	fmt = '{:<10e}'
-# 	for j in range(len(grid)):
-# 		f.write(fmt.format(grid[j]) + ' ') # write the y points 
-
-# 		for k in range(3): # loop through 3 runs 
-# 			f.write(fmt.format(u_of[k,i,j]) + ' ') # write Ux for each run 
-
-# 		f.write('\n')
-
-# 	f.close()
 
 tt.stop() # stop timer 

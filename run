@@ -186,15 +186,23 @@ else: # use better geometry
 	out.close()
 
 # --- case selection --- 
-inletVelocity = '' 
-if (args.case == 0): # N339, .6 m/s 
+inletVelocity = '' # store inlet velocity string for generateInlet  
+densityFile = '' # store transport properties file name 
+if (args.case == 0): # N339, .6 m/s, same density 
 	inletVelocity = '.6' 
+	densityFile = 'rho/same'
 
-elif (args.case == 1): # N337, 1 m/s 
+elif (args.case == 1): # N337, 1 m/s, same density  
 	inletVelocity = '1' 
+	densityFile = 'rho/same'
 
-elif (args.case == 2): # N320, .6 m/s 
+elif (args.case == 2): # N320, .6 m/s, different density  
 	inletVelocity = '.6'
+	densityFile = 'rho/diff' 
+
+
+# --- copy density file to constant/transportProperties --- 
+copyfile(densityFile, 'constant/transportProperties')
 
 
 # --- run commands --- 
