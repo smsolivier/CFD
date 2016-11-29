@@ -37,7 +37,6 @@ parser.add_argument('-N',
 	metavar=('NxInlet', 'NxMixing', 'Ny', 'Nz'),
 	help='number of cells'
 	)
-# run in 3D 
 # threeD option replaced by specify Nz > 1 
 # parser.add_argument('-threeD', action='store_true', default=False, help='run in 3D')
 # use k-Epsilon 
