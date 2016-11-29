@@ -222,7 +222,7 @@ if (args.cont):
 	runcmd('blockMesh') # generate mesh 
 
 	####################### My Changes ########################
-	# generateInlet(inletVelocity, args.interpolation, args.PLOT, args.STATUS)
+	generateInlet(inletVelocity, args.interpolation, args.PLOT, args.STATUS)
 	###########################################################	
 
 if (not(args.setupOnly)): # run if not in setupOnly mode 
