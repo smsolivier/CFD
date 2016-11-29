@@ -38,7 +38,8 @@ parser.add_argument('-N',
 	help='number of cells'
 	)
 # run in 3D 
-parser.add_argument('-threeD', action='store_true', default=False, help='run in 3D')
+# threeD option replaced by specify Nz > 1 
+# parser.add_argument('-threeD', action='store_true', default=False, help='run in 3D')
 # use k-Epsilon 
 parser.add_argument('-ke', action='store_true',	help='use k-Epsilon turbulence model')
 # use k-Omega 
@@ -97,7 +98,7 @@ Nx2 = int(args.N[1])
 Ny = int(args.N[2])
 Nz = int(args.N[3])
 
-NVols = (Nx1 + Nx2) * Ny * Nz 
+NVols = (Nx1 + Nx2) * 2*Ny * Nz 
 
 # --- change turbulence model --- 
 turbDir = 'kOmega/' # default model 
@@ -149,7 +150,7 @@ if (args.simple): # copy simple geometry
 	copyfile('mesh/simple', 'system/blockMeshDict')
 else: # use better geometry 
 	blockDictName = 'mesh/2D'
-	if (args.threeD == True):
+	if (Nz > 1):
 		blockDictName = 'mesh/3D'
 
 	f = open('mesh/top', 'r')
@@ -186,15 +187,23 @@ else: # use better geometry
 	out.close()
 
 # --- case selection --- 
-inletVelocity = '' 
-if (args.case == 0): # N339, .6 m/s 
+inletVelocity = '' # store inlet velocity string for generateInlet  
+densityFile = '' # store transport properties file name 
+if (args.case == 0): # N339, .6 m/s, same density 
 	inletVelocity = '.6' 
+	densityFile = 'rho/same'
 
-elif (args.case == 1): # N337, 1 m/s 
+elif (args.case == 1): # N337, 1 m/s, same density  
 	inletVelocity = '1' 
+	densityFile = 'rho/same'
 
-elif (args.case == 2): # N320, .6 m/s 
+elif (args.case == 2): # N320, .6 m/s, different density  
 	inletVelocity = '.6'
+	densityFile = 'rho/diff' 
+
+
+# --- copy density file to constant/transportProperties --- 
+copyfile(densityFile, 'constant/transportProperties')
 
 
 # --- run commands --- 

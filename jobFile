@@ -4,7 +4,7 @@
 #BSUB -R "span[ptile=20]" # cores per node to use 
 #BSUB -R "rusage[mem=1000]" # maximum memory per core 
 #BSUB -M 10000 # max memory per node 
-#BSUB -W 01:00 # wall time 
+#BSUB -W 02:00 # wall time 
 #BSUB -o stdout.job # output to stdout.jobname 
 #BSUB -e stderr.job # output error 
 
@@ -13,4 +13,5 @@ module load OpenFOAM/4.0-intel-2016b
 source /general/software/x86_64/easybuild/software/OpenFOAM/4.0-intel-2016b/OpenFOAM-4.0/etc/bashrc 
 module load Python/3.5.2-intel-2016b
 
-./run -np 5 2 2 -N 20 40 40 40 -threeD -quiet 
+# ./run -np 5 2 2 -N 20 40 40 40 -threeD -quiet 
+./gciRun.py 
