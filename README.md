@@ -2,6 +2,7 @@
 NUEN 489 GEMIX Project
 ## To Do 
 * Update inlet to write boundary conditions for omega, epsilon using formulas 
+* make run change densities according to case 
 * No mixing 
 * GCI 
 * Compute omega figure of merit 
