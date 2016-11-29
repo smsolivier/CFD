@@ -11,10 +11,15 @@ from scipy.integrate import quadrature
 import scipy.integrate as integrate 
 from scipy.stats import norm
 
-def calcGCI(f1, f2, f3, r12, r23, tol=1e-6):
+def calcGCI(f1, f2, f3, N, tol=1e-6):
 	''' computes observed order of convergence and sigma from 
 		non uniform refinement 
-	''' 
+	'''
+
+	# calculate refinement factor 
+	r12 = (N[0]/N[1])**(1/3)
+	r23 = (N[1]/N[2])**(1/3) 
+
 	converged = 0 
 	pold = 2 
 	alpha = np.fabs((f3 - f2)/(f2 - f1)) 
@@ -65,17 +70,17 @@ def calcOmega(u_sim, sigma_sim, u_ex, sigma_ex):
 	f_ex = lambda x: norm.pdf(x, u_ex, sigma_ex/2) 
 	f_sim = lambda x: norm.pdf(x, u_sim, sigma_sim)
 
-	print(integrate.quad(f_ex, -np.inf, np.inf)) 
-	print(u_ex, sigma_ex)
+	# print(integrate.quad(f_ex, -np.inf, np.inf)) 
+	# print(u_ex, sigma_ex)
 
-	plt.figure()
-	plt.axvline(u_ex)
-	plt.axvline(u_sim)
-	plt.plot(x, f_ex(x), label='ex')
-	plt.plot(x, f_sim(x), label='sim')
-	plt.plot(x, omega(x), label='omega')
-	plt.legend(loc='best')
-	plt.show()
+	# plt.figure()
+	# plt.axvline(u_ex)
+	# plt.axvline(u_sim)
+	# plt.plot(x, f_ex(x), label='ex')
+	# plt.plot(x, f_sim(x), label='sim')
+	# plt.plot(x, omega(x), label='omega')
+	# plt.legend(loc='best')
+	# plt.show()
 
 	# print(u_sim/u_ex, sigma_sim/sigma_ex)
 	# Omega, err = quadrature(omega, u_sim-1, u_sim+1)
@@ -83,7 +88,7 @@ def calcOmega(u_sim, sigma_sim, u_ex, sigma_ex):
 	# integrate omega(x) dx 
 	Omega = integrate.quad(omega, -np.inf, np.inf)
 
-	print('Omega =', Omega[0], 'Error =', Omega[1])
+	# print('Omega =', Omega[0], 'Error =', Omega[1])
 
 	return Omega[0] 
 
@@ -115,7 +120,7 @@ def readExperiment(case, dist):
 
 	return y_ex, u_ex, sigma_ex, k, ksigma 
 
-def readGCI(dr, grid, u_ex, sigma_ex, k_ex, ksigma_ex):
+def readGCI(dr, grid):
 	''' read in data from runGCI 
 		interpolates onto grid 
 		calculates sigma from GCI 
@@ -125,8 +130,10 @@ def readGCI(dr, grid, u_ex, sigma_ex, k_ex, ksigma_ex):
 	''' 
 	N = np.zeros(3) # store number of volumes for each run 
 
-	Ufunc_ex = interp1d(grid, u_ex, kind='cubic') # exact interpolated velocity 
-	centerU_ex = Ufunc_ex(0) 
+	# Ufunc_ex = interp1d(grid, u_ex, kind='cubic') # exact interpolated velocity 
+	# centerU_ex = Ufunc_ex(0) 
+
+	cent = int(len(grid)/2) # center index of grid 
 
 	U = np.zeros((3,len(grid))) # store velocities on grid 
 	K = np.zeros((3, len(grid))) # store k for each run on each grid point 
@@ -150,22 +157,16 @@ def readGCI(dr, grid, u_ex, sigma_ex, k_ex, ksigma_ex):
 		K[i,:] = kfunc(grid) # interpolate k onto grid 
 		C[i,:] = interp1d(y, c, kind='cubic')(grid)
 
-		centerU[i] = U[i,int(len(grid)/2)] # centerline Ux 
-		centerk[i] = K[i,int(len(grid)/2)] # centerline k 
+		centerU[i] = U[i,cent] # centerline Ux 
+		centerk[i] = K[i,cent] # centerline k 
 
-	# calculate refinement factor 
-	r12 = (N[0]/N[1])**(1/2)
-	r23 = (N[1]/N[2])**(1/2) 
-
-	pU, sigmaU = calcGCI(centerU[0], centerU[1], centerU[2], r12, r23) 
+	pU, sigmaU = calcGCI(centerU[0], centerU[1], centerU[2], N) 
 
 	print('pU =', pU, 'U =', centerU[0], sigmaU)
 
-	pk, sigmak = calcGCI(centerk[0], centerk[1], centerk[2], r12, r23) 
+	pk, sigmak = calcGCI(centerk[0], centerk[1], centerk[2], N) 
 
-	Omega = calcOmega(centerU[0], sigmaU, centerU_ex, sigma_ex[int(len(grid)/2)])
-
-	return U[0,:], 2*sigmaU*np.ones(len(grid)), Omega*np.ones(len(grid)) 
+	return U[0,:], 2*sigmaU*np.ones(len(grid)), K[0,:], 2*sigmak*np.ones(len(grid)) 
 
 def globalMerit(Omega, y_ex, u_ex, u, alpha, beta): 
 	''' use omega and differnence in derivatives to calculate global merit 
@@ -224,26 +225,31 @@ def handle(case, expDir, ofDir, alpha, beta):
 	y_ex, u_ex, sigma_ex, k_ex, ksigma_ex = readExperiment(case, expDir)
 
 	# get GCI data 
-	u, sigma, Omega = readGCI(ofDir, y_ex/1000, u_ex, sigma_ex, k_ex, ksigma_ex) 
+	u, sigma, k, sigmak = readGCI(ofDir, y_ex/1000) 
+
+	# compute Omega 
+	Omega = np.zeros(len(u))
+	for i in range(len(u)):
+		Omega[i] = calcOmega(u[i], sigma[i], u_ex[i], sigma_ex[i]) 
 
 	# compute M 
 	M = globalMerit(Omega, y_ex, u_ex, u, alpha, beta)
 
-	return y_ex, u_ex, sigma_ex, u, sigma, Omega, M 
+	return y_ex, u_ex, sigma_ex, u, sigma, k_ex, ksigma_ex, k, sigmak, Omega, M 
 
 # undisclosed weighting factors for M formula 
 alpha = 1 
 beta = 1 
 
-case = 2 
+case = 0
 dist = ['050', '150', '250', '350', '450'] 
-gciDir = 'gciData/'
+gciDir = 'adaData/'
 subDirs = sorted(os.listdir(gciDir)) # get list of subdirectories in gciDir 
 
 fig1 = plt.figure()
 fig2 = plt.figure()
 for i in range(len(dist)):
-	y_ex, u_ex, sigma_ex, u, sigma, Omega, M = handle(
+	y_ex, u_ex, sigma_ex, u, sigma, k_ex, ksigma_ex, k, sigmak, Omega, M = handle(
 		case = case, 
 		expDir = dist[i], 
 		ofDir = gciDir + subDirs[i], 
@@ -256,11 +262,13 @@ for i in range(len(dist)):
 
 	ax1 = fig1.add_subplot(np.ceil(len(dist)/2), 2, i+1) 
 	ax1.errorbar(y_ex, u, yerr=sigma)
-	ax1.plot(y_ex, u_ex)
+	ax1.errorbar(y_ex, u_ex, yerr=sigma_ex)
 	ax1.set_title('M = ' + str(M))
 
 	ax2 = fig2.add_subplot(np.ceil(len(dist)/2), 2, i+1)
-	ax2.plot(y_ex, Omega)
+	ax2.errorbar(y_ex, k, yerr=sigmak)
+	# ax2.plot(y_ex, k)
+	ax2.errorbar(y_ex, k_ex, yerr=ksigma_ex)
 
 plt.show()
 

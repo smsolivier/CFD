@@ -41,11 +41,12 @@ d = np.array([.05, .15, .25, .35, .45]) # distances to interpolate
 # set up three runs 
 # number of volumes
 Nx1 = np.array([15, 15, 15])
-Nx2 = np.array([40, 30, 20])
-Ny = np.array([40, 30, 20])
+Nx2 = np.array([60, 40, 20])
+Ny = np.array([20, 20, 20])
 # Nx2 = np.array([10, 10, 10])
 # Ny = np.array([10,10,10])
-Nz = np.ones(3)*1 
+# Nz = np.ones(3)*1
+Nz = np.array([20, 20, 20]) 
 
 # total volumes for each run 
 N = (Nx1+Nx2)*2*Ny*Nz # number of volumes 
@@ -63,8 +64,10 @@ for i in range(len(d)):
 	os.makedirs(currentDir) 
 
 # u_of = np.zeros((len(N), len(d), len(grid))) # store interpolated velocities 
-for i in range(len(N)): # loop through three runs 
-	x = os.system('./run -N %s %s %s %s -quiet' % (int(Nx1[i]), int(Nx2[i]), int(Ny[i]), int(Nz[i])))
+# loop backwards so largest run is last (can run paraview on best run) 
+runstr = './run -N %s %s %s %s -quiet -threeD'
+for i in range(len(N)-1, -1, -1): # loop through three runs 
+	x = os.system(runstr % (int(Nx1[i]), int(Nx2[i]), int(Ny[i]), int(Nz[i])))
 	if (x != 0): # exit if problems 
 		sys.exit()
 
