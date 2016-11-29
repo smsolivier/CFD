@@ -6,6 +6,53 @@ import matplotlib.pyplot as plt
 import os 
 import sys 
 
+def interpolate(xinterp, r, val):
+	N = len(val)
+
+	# get two nearest points, want them to straddle xinterp 
+	indx = np.argmin(np.fabs(r[:,0] - xinterp))
+	x1 = r[indx,0] # closest value 
+	x2 = r[indx+1,0] # next value up 
+	if (x1 > xinterp): # make sure x1 and x2 straddle xinterp 
+		x2 = r[indx-1,0]
+
+	print('interpolating', xinterp, 'between', x1, x2)
+
+	# get z index for 3D 
+	zwidth = 0 # width of domain in z 
+	indz = np.argmin(np.fabs(r[:,2] - zwidth))
+	z = r[indz, 2] # closest z value to zwidth 
+
+	y1 = [] # store values at x1 
+	y2 = [] # store values at x2
+
+	val1 = [] # store val at x = x1 
+	val2 = [] # store val at x = x2 
+
+	for i in range(N):
+		# test for x = x1 
+		if (r[i,0] == x1 and r[i,2] == z):
+			y1.append(r[i,1]) # append y value 
+			val1.append(val[i]) # append val
+
+		# test for x = x2 
+		elif (r[i,0] == x2 and r[i,2] == z):
+			y2.append(r[i,1]) # store y value 
+			val2.append(val[i]) # store val 
+
+	# convert to numpy arrays 
+	y1 = np.array(y1)
+	y2 = np.array(y2)
+
+	val1 = np.array(val1)
+	val2 = np.array(val2) 
+
+	# interpolate 
+	# y = (y2 - y1)/(x2 - x1) * (x - x1) + y1 
+	valinterp = (val2 - val1)/(x2 - x1) * (xinterp - x1) + val1 
+
+	return y1, valinterp
+
 def parse(xinterp, PLOT=False):
 	''' parses OpenFOAM time directories and interpolates the y 
 		velocity profile using the writeCellCentres output. 
@@ -21,6 +68,10 @@ def parse(xinterp, PLOT=False):
 				y values where velocity is calculated 
 			uinterp:
 				interpolated Ux points 
+			kinterp:
+				interpolated k points 
+			Cinterp:
+				interpolated concentration points 
 	''' 
 
 	tdir = '0'
@@ -35,10 +86,9 @@ def parse(xinterp, PLOT=False):
 
 	initDir = '0/' # place where cell centers are stored 
 
-	ufile = open(tdir+'U', 'r') # open output velocity file 
-
-
 	# --- get velocities --- 
+	ufile = open(tdir+'U', 'r') # open output velocity file
+
 	# store velocity components into U 
 	for line in ufile:
 		if (line.startswith('internalField')):
@@ -90,51 +140,65 @@ def parse(xinterp, PLOT=False):
 		g.close()
 
 
+	# --- get k --- 
+	kfile = open(tdir+'k', 'r') # open output velocity file
+	for line in kfile:
+		if (line.startswith('internalField')):
+			N = int(next(kfile).strip()) # get number of volumes 
+			assert (N == n) # assert number of volume = same as from position file 
+
+			# skip line 
+			next(kfile)
+
+			# store k 
+			k = np.zeros(N) 
+
+			i = 0
+			for line in kfile:
+				if (line.strip() == ')'): # break if end of internalField 
+					break 
+
+				# get k value 
+				k[i] = float(line.strip()) 
+
+				i += 1 # update array location 
+
+	kfile.close() # close kfile 
+
+
+	# --- get C --- 
+	cfile = open(tdir + 'alpha.upper', 'r') # open concentration file 
+	for line in cfile:
+		if (line.startswith('internalField')):
+			n = int(next(cfile).strip()) # get number of volumes 
+			assert (n == N) # assert number of volumes same as k 
+
+			# skip line 
+			next(cfile)
+
+			# store C
+			C = np.zeros(n) 
+
+			i = 0
+			for line in cfile:
+				if (line.strip() == ')'): # break if end of internal field 
+					break 
+
+				# get C values 
+				C[i] = float(line.strip())
+
+				i += 1 # update array location 
+
+	cfile.close() # close c file 
+
+
 	# --- interpolate to xinterp --- 
-	# get two nearest points, want them to straddle xinterp 
-	indx = np.argmin(np.fabs(r[:,0] - xinterp))
-	x1 = r[indx,0] # closest value 
-	x2 = r[indx+1,0] # next value up 
-	if (x1 > xinterp): # make sure x1 and x2 straddle xinterp 
-		x2 = r[indx-1,0]
-
-	print('interpolating U at', xinterp, 'between', x1, x2)
-
-	# get z index for 3D 
-	zwidth = 0 # width of domain in z 
-	indz = np.argmin(np.fabs(r[:,2] - zwidth))
-	z = r[indz, 2] # closest z value to zwidth 
-
-	y1 = [] # store values at x1 
-	y2 = [] # store values at x2
-
-	u1 = [] # store Ux values at x = x1 
-	u2 = [] # store Ux values at x = x2 
-
-	for i in range(N):
-		# test for x = x1 
-		if (r[i,0] == x1 and r[i,2] == z):
-			y1.append(r[i,1]) # append y value 
-			u1.append(U[i,0]) # append Ux 
-
-		# test for x = x2 
-		elif (r[i,0] == x2 and r[i,2] == z):
-			y2.append(r[i,1]) # store y value 
-			u2.append(U[i,0]) # store Ux 
-
-	# convert to numpy arrays 
-	y1 = np.array(y1)
-	y2 = np.array(y2)
-
-	u1 = np.array(u1)
-	u2 = np.array(u2) 
-
-	# interpolate 
-	# y = (y2 - y1)/(x2 - x1) * (x - x1) + y1 
-	uinterp = (u2 - u1)/(x2 - x1) * (xinterp - x1) + u1 
+	y1, uinterp = interpolate(xinterp, r, U[:,0]) # get Ux profile 
+	y1, kinterp = interpolate(xinterp, r, k) # get k profile 
+	y1, Cinterp = interpolate(xinterp, r, C) # get concentration profile 
 
 	if (PLOT):
-		plt.plot(y1*1000, uinterp)
+		plt.plot(y1*1000, Cinterp)
 		plt.xlabel('y (mm)')
 		plt.ylabel('Ux (m/s)')
 		plt.title(str(xinterp))
@@ -150,7 +214,7 @@ def parse(xinterp, PLOT=False):
 
 	f.close()
 
-	return y1, uinterp 
+	return y1, uinterp, kinterp, Cinterp  
 
 if __name__ == '__main__':
 
@@ -187,7 +251,7 @@ if __name__ == '__main__':
 		y_ex = df[:,1]
 		u_ex = -df[:,2] 
 
-		y, u = parse(d[i])
+		y, u, k, C = parse(d[i])
 
 		uinterp = np.interp(y_ex, y*1000, u) 
 

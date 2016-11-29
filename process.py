@@ -11,8 +11,6 @@ from scipy.integrate import quadrature
 import scipy.integrate as integrate 
 from scipy.stats import norm
 
-import readFoam as rf 
-
 def calcGCI(f1, f2, f3, r12, r23, tol=1e-6):
 	''' computes observed order of convergence and sigma from 
 		non uniform refinement 
@@ -92,15 +90,21 @@ def readExperiment(case, dist):
 
 	pre = 'data/' + pre + 'X'
 
-	df = np.loadtxt(pre+dist+post, skiprows=5, usecols=(1,2,3)) # y, Vx, U_x95
+	# y, Vx, U_x95, k, kLow, kUp
+	df = np.loadtxt(pre+dist+post, skiprows=5, usecols=(1,2,3,15,16,17)) 
 
 	y_ex = df[:,0] # y grid points 
 	u_ex = -df[:,1] # Ux profile 
 	sigma_ex = df[:,2] # 95% uncertainty 
+	k = df[:,3]
+	kLow = df[:,4]
+	kUp = df[:,5] 
 
-	return y_ex, u_ex, sigma_ex 
+	ksigma = (kLow - kUp)/2 
 
-def readGCI(dr, grid, u_ex, sigma_ex):
+	return y_ex, u_ex, sigma_ex, k, ksigma 
+
+def readGCI(dr, grid, u_ex, sigma_ex, k_ex, ksigma_ex):
 	''' read in data from runGCI 
 		interpolates onto grid 
 		calculates sigma from GCI 
@@ -111,6 +115,10 @@ def readGCI(dr, grid, u_ex, sigma_ex):
 	N = np.zeros(3) # store number of volumes for each run 
 
 	U = np.zeros((3,len(grid))) # store velocities on grid 
+	K = np.zeros((3, len(grid))) # store k for each run on each grid point 
+	C = np.zeros((3, len(grid))) # store C for each run on each grid point 
+	centerU = np.zeros(3) # store centerline velocity for each run 
+	centerk = np.zeros(3) # store centerline k for each run 
 	for i in range(3): # loop through number of runs 
 		# get number of volumes 
 		fname = dr + '/run'+str(i)+'.txt'
@@ -118,31 +126,29 @@ def readGCI(dr, grid, u_ex, sigma_ex):
 		N[i] = float(f.readline().strip())
 
 		# read in data 
-		y, u = np.loadtxt(fname, skiprows=1, unpack=True)
+		y, u, k, c = np.loadtxt(fname, skiprows=1, unpack=True)
 
 		# interpolate onto grid 
 		# U[i,:] = np.interp(grid, y, u) # interpolate onto grid 
 		U[i,:] = interp1d(y, u, kind='cubic')(grid) 
+		kfunc = interp1d(y, k, kind='cubic') # interpolated function, used for integration 
+		K[i,:] = kfunc(grid) # interpolate k onto grid 
+		C[i,:] = interp1d(y, c, kind='cubic')(grid)
+
+		centerU[i] = U[i,int(len(grid)/2)] # centerline Ux 
+		centerk[i] = K[i,int(len(grid)/2)] # centerline k 
 
 	# calculate refinement factor 
-	r12 = (N[0]/N[1])**(1/3)
-	r23 = (N[1]/N[2])**(1/3) 
+	r12 = (N[0]/N[1])**(1/2)
+	r23 = (N[1]/N[2])**(1/2) 
 
-	n = len(grid) # number of grid points 
+	pU, sigmaU = calcGCI(centerU[0], centerU[1], centerU[2], r12, r23) 
 
-	p = np.zeros(n) # order of convergence for each velocity 
-	sigma = np.zeros(n) # uncertainty for each velocity point 
-	Omega = np.zeros(n) # Omega FOM for each point 
+	pk, sigmak = calcGCI(centerk[0], centerk[1], centerk[2], r12, r23) 
 
-	# calculate for each point 
-	for i in range(n):
-		# gci 
-		p[i], sigma[i] = calcGCI(U[0,i], U[1,i], U[2,i], r12, r23) 
+	Omega = calcOmega(centerU[0], sigmaU, u_ex[int(len(grid)/2)], sigma_ex[int(len(grid)/2)])
 
-		Omega[i] = calcOmega(U[0,i], 2*np.fabs(sigma[i]), u_ex[i], sigma_ex[i])
-
-
-	return U[0,:], sigma, Omega 
+	return U[0,:], 2*sigmaU*np.ones(len(grid)), Omega*np.ones(len(grid)) 
 
 def globalMerit(Omega, y_ex, u_ex, u, alpha, beta): 
 	''' use omega and differnence in derivatives to calculate global merit 
@@ -198,10 +204,10 @@ def handle(case, expDir, ofDir, alpha, beta):
 	''' 
 
 	# get experimental data 
-	y_ex, u_ex, sigma_ex = readExperiment(case, expDir)
+	y_ex, u_ex, sigma_ex, k_ex, ksigma_ex = readExperiment(case, expDir)
 
 	# get GCI data 
-	u, sigma, Omega = readGCI(ofDir, y_ex/1000, u_ex, sigma_ex)
+	u, sigma, Omega = readGCI(ofDir, y_ex/1000, u_ex, sigma_ex, k_ex, ksigma_ex) 
 
 	# compute M 
 	M = globalMerit(Omega, y_ex, u_ex, u, alpha, beta)
@@ -234,9 +240,9 @@ for i in range(len(dist)):
 	plt.plot(y_ex, u_ex)
 	plt.title('M = ' + str(M))
 
-	print('\n', i)
-	for i in range(len(y_ex)):
-		print(u[i], sigma[i], u_ex[i], sigma_ex[i])
+	# print('\n', i)
+	# for i in range(len(y_ex)):
+	# 	print(u[i], sigma[i], u_ex[i], sigma_ex[i])
 
 plt.show()
 
