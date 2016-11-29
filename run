@@ -38,7 +38,8 @@ parser.add_argument('-N',
 	help='number of cells'
 	)
 # run in 3D 
-parser.add_argument('-threeD', action='store_true', default=False, help='run in 3D')
+# threeD option replaced by specify Nz > 1 
+# parser.add_argument('-threeD', action='store_true', default=False, help='run in 3D')
 # use k-Epsilon 
 parser.add_argument('-ke', action='store_true',	help='use k-Epsilon turbulence model')
 # use k-Omega 
@@ -149,7 +150,7 @@ if (args.simple): # copy simple geometry
 	copyfile('mesh/simple', 'system/blockMeshDict')
 else: # use better geometry 
 	blockDictName = 'mesh/2D'
-	if (args.threeD == True):
+	if (Nz > 1):
 		blockDictName = 'mesh/3D'
 
 	f = open('mesh/top', 'r')

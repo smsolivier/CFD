@@ -53,7 +53,7 @@ Nz = np.ones(3)*1
 	2: N320, .6 m/s, different density 
 ''' 
 
-case = 1
+case = 0
 
 # total volumes for each run 
 N = (Nx1+Nx2)*2*Ny*Nz # number of volumes 
@@ -76,8 +76,6 @@ f.write(str(case))
 f.close()
 
 # loop backwards so largest run is last (can run paraview on best run) 
-runstr = './run -N %s %s %s %s -quiet'
-
 for i in range(len(N)-1, -1, -1): # loop through three runs 
 	runstr = './run -N {} {} {} {} -quiet -case {}'.format(
 		int(Nx1[i]), # inlet x 
