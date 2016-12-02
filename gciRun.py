@@ -18,9 +18,6 @@ import readFoam as rf
 Nx1 = np.array([15, 15, 15])
 Nx2 = np.array([40, 30, 20])
 Ny = np.array([30, 20, 10])
-# Nx2 = np.array([10, 10, 10])
-# Ny = np.array([10,10,10])
-# Nz = np.ones(3)*1
 Nz = np.array([30, 20, 10]) 
 
 # total volumes for each run 
@@ -36,6 +33,11 @@ N = (Nx1+Nx2)*2*Ny*Nz # number of volumes
 case = 0
 if (len(sys.argv) == 2):
 	case = sys.argv[1] 
+
+# processor decomposition 
+npx = 4 # processors in x 
+npy = 1 # processors in y 
+npz = 1 # processors in z 
 
 tt = Timer.timer() # start timer 
 
@@ -77,12 +79,13 @@ f.close()
 
 # loop backwards so largest run is last (can run paraview on best run) 
 for i in range(len(N)-1, -1, -1): # loop through three runs 
-	runstr = './run -N {} {} {} {} -quiet -case {}'.format(
+	runstr = './run -N {} {} {} {} -quiet -case {} -np {} {} {}'.format(
 		int(Nx1[i]), # inlet x 
 		int(Nx2[i]), # mixing x 
 		int(Ny[i]), # y vols in each half 
 		int(Nz[i]), # total z vols 
-		case # which case to run 
+		case, # which case to run 
+		npx, npy, npz # processor decomposition 
 		)
 
 	# run openfoam 
