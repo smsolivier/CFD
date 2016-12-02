@@ -13,6 +13,30 @@ import readFoam as rf
 
 ''' runs ./run 3 times and writes y profile at each experimental distance ''' 
 
+# --- set up three runs --- 
+# number of volumes
+Nx1 = np.array([15, 15, 15])
+Nx2 = np.array([40, 30, 20])
+Ny = np.array([30, 20, 10])
+# Nx2 = np.array([10, 10, 10])
+# Ny = np.array([10,10,10])
+# Nz = np.ones(3)*1
+Nz = np.array([30, 20, 10]) 
+
+# total volumes for each run 
+N = (Nx1+Nx2)*2*Ny*Nz # number of volumes 
+
+# --- select case --- 
+''' case
+	0: N339, .6 m/s, same density 
+	1: N337, 1 m/s, same density 
+	2: N320, .6 m/s, different density 
+''' 
+# select case, use command line input if provided 
+case = 0
+if (len(sys.argv) == 2):
+	case = sys.argv[1] 
+
 tt = Timer.timer() # start timer 
 
 def handleOF(xinterp, grid):
@@ -32,31 +56,7 @@ def readOF(xinterp):
 
 	return y, u, k, C 
 
-# common interpolation grid to compare to 
-grid = np.linspace(-.025, .025, 30)
-
 d = np.array([.05, .15, .25, .35, .45]) # distances to interpolate 
-
-# set up three runs 
-# number of volumes
-Nx1 = np.array([15, 15, 15])
-Nx2 = np.array([140, 70, 35])
-Ny = np.array([30, 30, 30])
-# Nx2 = np.array([10, 10, 10])
-# Ny = np.array([10,10,10])
-Nz = np.ones(3)*1
-# Nz = np.array([20, 20, 20]) 
-
-''' case
-	0: N339, .6 m/s, same density 
-	1: N337, 1 m/s, same density 
-	2: N320, .6 m/s, different density 
-''' 
-
-case = 0
-
-# total volumes for each run 
-N = (Nx1+Nx2)*2*Ny*Nz # number of volumes 
 
 # make directory gciData 
 dataDir = 'gciData'

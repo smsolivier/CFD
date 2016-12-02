@@ -17,6 +17,9 @@ FoamFile
 
 phases (upper lower);
 
+Dab           [0 2 -1 0 0 0 0]    1e-06;
+alphatab      [0 0 0 0 0 0 0]     1;
+
 upper
 {
     transportModel  Newtonian;

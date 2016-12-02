@@ -17,9 +17,9 @@ FoamFile
 convertToMeters 0.001;
 
 Nx1 15; 
-Nx2 140; 
+Nx2 40; 
 Ny 30; 
-Nz 1; 
+Nz 30; 
 
 vertices
 (
@@ -165,6 +165,12 @@ boundary
 
             (14 16 6 2)
             (15 17 13 10)
+
+            // Back
+            (0 1 2 3)    //Lower Inlet
+            (14 2 10 15) //Upper Inlet
+            (1 8 18 2)   //Lower Mixing Channel
+            (2 18 9 10)  //Upper Mixing Channel
         );
     }
 
@@ -196,22 +202,24 @@ boundary
         );
     }
 
-    frontBack
+    reflecting
     {
-        type empty;
-        faces
+        type patch; 
+        faces 
         (
-            // Back
-            (0 1 2 3)    //Lower Inlet
-            (14 2 10 15) //Upper Inlet
-            (1 8 18 2)   //Lower Mixing Channel
-            (2 18 9 10)  //Upper Mixing Channel
-
             // Front
             (4 5 6 7)    //Lower Inlet
             (16 6 13 17) //Upper Inlet
             (5 11 19 6)  //Lower Mixing Channel
             (6 19 12 13) //Upper Mixing Channel
+        ); 
+    }
+
+    frontBack
+    {
+        type empty;
+        faces
+        (
         );
     }
 );

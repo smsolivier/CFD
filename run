@@ -58,6 +58,11 @@ parser.add_argument('-readFoam', action='store_true', help='run readFoam.py to p
 # specify which case to run 
 parser.add_argument('-case', type=int, default=0, help='0: N339, 1: N337, 2: N320')
 
+# specify diffusivity 
+parser.add_argument('-Dab', type=float, default=1e-6, help='diffusivity used in twoLiquidMixingFoam')
+# alphatab (1/Schmidt number)
+parser.add_argument('-alphatab', type=float, default=1, help='alpha tab used in twoLiquidMixingFoam')
+
 
 
 ####################### My Changes ########################
@@ -204,6 +209,22 @@ elif (args.case == 2): # N320, .6 m/s, different density
 # --- copy density file to constant/transportProperties --- 
 copyfile(densityFile, 'constant/transportProperties')
 
+# --- set Dab in constant/transportProperties --- 
+f = open('constant/transportProperties', 'r')
+string = '' # store transportProperties file 
+for line in f:
+	if (line.startswith('Dab')):
+		string += 'Dab           [0 2 -1 0 0 0 0]    ' + str(args.Dab) + '; \n'
+	elif (line.startswith('alphatab')):
+		string += 'alphatab      [0 0 0 0 0 0 0]     ' + str(args.alphatab) + '; \n'
+	else:
+		string += line 
+f.close()
+# write string to constant/transportProperties 
+f = open('constant/transportProperties', 'w')
+f.write(string) 
+f.close()
+
 
 # --- run commands --- 
 def runcmd(cmd):
@@ -240,7 +261,7 @@ if (not(args.setupOnly)): # run if not in setupOnly mode
 		runcmd('decomposePar -force') 
 
 	# run pipe into log 
-	runcmd('mpirun -np ' + str(np) + ' interFoam -parallel | tee log')
+	runcmd('mpirun -np ' + str(np) + ' twoLiquidMixingFoam -parallel | tee log')
 
 	runcmd('reconstructPar') # reconstruct parallel folders 
 
