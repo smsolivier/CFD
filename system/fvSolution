@@ -19,33 +19,42 @@ solvers
 {
     "alpha.upper.*"
     {
-        nAlphaCorr      2;
-        nAlphaSubCycles 1;
-        cAlpha          1;
+        // nAlphaCorr      2;
+        // nAlphaSubCycles 1;
+        // cAlpha          1;
 
-        MULESCorr       yes;
-        nLimiterIter    3;
+        // MULESCorr       yes;
+        // nLimiterIter    3;
+
+        // solver          smoothSolver;
+        // smoother        symGaussSeidel;
+        // tolerance       1e-8;
+        // relTol          0;
+
+        nAlphaSubCycles     2;
+        nAlphaCorr          1;
 
         solver          smoothSolver;
-        smoother        symGaussSeidel;
-        tolerance       1e-8;
+        smoother        GaussSeidel;
+        tolerance       1e-9;
         relTol          0;
+        nSweeps         1;
     }
 
-    pcorr
-    {
-        solver          PCG;
-        preconditioner
-        {
-            preconditioner  GAMG;
-            tolerance       1e-5;
-            relTol          0;
-            smoother        GaussSeidel;
-        }
-        tolerance       1e-5;
-        relTol          0;
-        // maxIter         50;
-    }
+    // pcorr
+    // {
+    //     solver          PCG;
+    //     preconditioner
+    //     {
+    //         preconditioner  GAMG;
+    //         tolerance       1e-5;
+    //         relTol          0;
+    //         smoother        GaussSeidel;
+    //     }
+    //     tolerance       1e-5;
+    //     relTol          0;
+    //     // maxIter         50;
+    // }
 
     p_rgh
     {
@@ -57,7 +66,7 @@ solvers
 
 
 
-        maxIter          50;
+        // maxIter          50;
     };
 
     p_rghFinal
@@ -69,16 +78,18 @@ solvers
     "(U|k|omega).*"
     {
         solver          smoothSolver;
-        smoother        symGaussSeidel;
-        tolerance       1e-06;
-        relTol          0;
+        // smoother        symGaussSeidel;
+        smoother        GaussSeidel; 
+        tolerance       1e-07;
+        relTol          0.1;
         minIter         1;
     }
 }
 
 PIMPLE
 {
-    momentumPredictor   no;
+    // momentumPredictor   no;
+    momentumPredictor   yes; 
     nOuterCorrectors    1;
     nCorrectors         3;
     nNonOrthogonalCorrectors 0;

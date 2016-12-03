@@ -16,11 +16,12 @@ from readFoam import readExperiment # gets experimental values
 ''' runs ./run 3 times and writes y profile at each experimental distance ''' 
 
 # --- set up three runs --- 
-# number of volumes
-Nx1 = np.array([15, 15, 15])
-Nx2 = np.array([40, 30, 20])
-Ny = np.array([30, 20, 10])
-Nz = np.array([30, 20, 10]) 
+# number of volumes, most volumes to least 
+Nx1 = np.array([20, 20, 20, 20])
+Nx2 = np.array([80, 60, 40, 20])
+Ny = np.array([40, 30, 20, 10])
+# Nz = np.array([30, 20, 10, 10]) 
+Nz = np.ones(4)
 
 # total volumes for each run 
 N = (Nx1+Nx2)*2*Ny*Nz # number of volumes 
@@ -113,5 +114,22 @@ for i in range(len(N)-1, -1, -1): # loop through three runs
 				)
 			)
 		f.close()
+
+	# save yPlus information 
+	f = open('log', 'r')
+	for line in f:
+		if (line.startswith('yPlus yPlus write:')):
+			next(f)
+			line = next(f) # get line with yplus values 
+			for j in range(len(line)):
+				if (line[j:len('min = ')] == 'min = '):
+					print('found min')
+				elif (line[j:len('max = ')] == 'max = '):
+					print('found max')
+				elif (line[j:len('average = ')] == 'average = '):
+					print('found average')
+	f.close()
+
+
 
 tt.stop() # stop timer 

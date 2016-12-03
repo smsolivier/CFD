@@ -235,19 +235,22 @@ def readExperiment(case, dist):
 
 	y_ex = df[:,0] # y grid points 
 	u_ex = -df[:,1] # Ux profile 
-	sigma_ex = df[:,2] # 95% uncertainty 
+	sigma_ex = df[:,2]/2 # 95% uncertainty --> 1 sigma  
 	k = df[:,3]
 	kLow = df[:,4]
 	kUp = df[:,5] 
 
-	ksigma = (kLow - kUp)/2 
+	# get maximum uncertainty 
+	ksigma = np.zeros(len(k))
+	for i in range(len(ksigma)):
+		ksigma[i] = max(kLow[i], kUp[i])/2 
 
 	# y, c, c95 
 	cf = np.loadtxt(pre+dist+field[1]+post, skiprows=3, usecols=(0,1,2))
 
-	y_c = cf[:,0] 
-	c = cf[:,1]
-	sigmac = cf[:,2]
+	y_c = cf[:,0] # y points for concentration 
+	c = cf[:,1] # concentration values 
+	sigmac = cf[:,2]/2 # 95% uncertainty --> 1 sigma 
 
 	x = -df[0,-1]/1000 # x location of experimental sensor, given as negative in mm 
 

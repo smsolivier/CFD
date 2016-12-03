@@ -48,7 +48,7 @@ parser.add_argument('-laminar', action='store_true', help='turn off turbulence')
 # bool for send notification when done, default to on 
 parser.add_argument('-quiet', action='store_true', help='suppress notification when done')
 # make mesh only 
-parser.add_argument('-setupOnly', action='store_true', help='run setup commands but do not run interFoam')
+parser.add_argument('-setupOnly', action='store_true', help='generate mesh only ')
 # don't remove previous times 
 parser.add_argument('-cont', action='store_true', help='continue from latest time')
 # use simple geometry 
@@ -212,6 +212,7 @@ elif (args.case == 2): # N320, .6 m/s, different density
 # --- copy density file to constant/transportProperties --- 
 copyfile(densityFile, 'constant/transportProperties')
 
+
 # --- set Dab in constant/transportProperties --- 
 f = open('constant/transportProperties', 'r')
 string = '' # store transportProperties file 
@@ -226,6 +227,25 @@ f.close()
 # write string to constant/transportProperties 
 f = open('constant/transportProperties', 'w')
 f.write(string) 
+f.close()
+
+
+# --- change controlDict to change solver type --- 
+application = 'twoLiquidMixingFoam' # name of solver 
+if (args.interFoam):
+	application = 'interFoam'
+f = open('system/controlDict', 'r') # open control dict 
+string = '' # store file 
+for line in f:
+	if (line.startswith('application')): # if application line 
+		string += 'application     ' + application + ';\n'
+
+	else: # all other lines 
+		string += line 
+f.close()
+# write to system/controlDict
+f = open('system/controlDict', 'w') # write to same file 
+f.write(string) # overwrite file with changes 
 f.close()
 
 
@@ -273,9 +293,10 @@ if (not(args.setupOnly)): # run if not in setupOnly mode
 
 	# yPlus 
 	if (args.interFoam): # use interfoam 
-		runcmd('interFoam -postProcess -func yPlus') # generate yPlus 
+		runcmd('interFoam -postProcess -func yPlus >> log') # generate yPlus 
 	else:
-		runcmd('twoLiquidMixingFoam -postProcess -func yPlus')
+		runcmd('twoLiquidMixingFoam -postProcess -func yPlus >> log')
+
 
 print('Number of Volumes =', NVols)
 

@@ -11,7 +11,7 @@ from scipy.integrate import quadrature
 import scipy.integrate as integrate 
 from scipy.stats import norm
 
-from readFoam import readExperiment
+from readFoam import readExperiment # read in experimental values from data/ 
 
 def gaussian(mu, sigma):
 	''' return gaussian with average mu and variance sigma^2 ''' 
@@ -66,7 +66,7 @@ def calcOmega(u_sim, sigma_sim, u_ex, sigma_ex):
 
 	return Omega[0] 
 
-def calcGCI(f, N, tol=1e-6):
+def calcGCI(f, N, tol=1e-9):
 	''' computes observed order of convergence and sigma from 
 		non uniform refinement 
 	'''
@@ -75,52 +75,57 @@ def calcGCI(f, N, tol=1e-6):
 	f2 = f[1]
 	f3 = f[2] 
 
-	BAD = 0
+	BAD = ''
 
 	# check for oscillatory convergence 
 	if (f2/f1  - 1> 0 and f2/f3  - 1> 0) or (f2/f1  - 1< 0 and f2/f3  - 1< 0):
 		# print('oscillatory convergence', f2/f1, f2/f3)
 
-		BAD = 1 
+		BAD += 'oscillatory ' 
 	# asymptotic convergence, good for GCI  
 	elif (f1 < f2 < f3 or f1 > f2 > f3):
-		BAD = 0 
+		BAD += ''
 
 	else:
 		# print('unknown behavior')
-		BAD = 1 
+		BAD += 'unknown '
 
 	# calculate refinement factor 
 	r12 = (N[0]/N[1])**(1/3)
 	r23 = (N[1]/N[2])**(1/3) 
 
-	converged = 0 
-	pold = 2 
-	alpha = np.fabs((f3 - f2)/(f2 - f1)) 
+	converged = 0 # store if converged, break if 1 
+	pold = 2 # guess 2 
+	alpha = np.fabs((f3 - f2)/(f2 - f1)) # ratio of f's, common for iteration 
 	while (not(converged)):
-		p = np.log(alpha* (r12**pold - 1)/(r23**pold - 1))/np.log(r12)
+		# update p 
+		p = np.log(alpha * (r12**pold - 1)/(r23**pold - 1))/np.log(r12)
 
+		# compare to old p 
 		if (np.fabs(p - pold)/p < tol):
 			converged = 1 
 
+		# update pold 
 		pold = p 
 
+	# set factor of safety 
 	Fs = 3 
-	if (np.fabs(p - 2)/2 < .1):
+	if (np.fabs(p - 2)/2 < .1): # if close to expected p = 2
 		Fs = 1.25 
 
+	# deviation 
 	sigma = Fs/(r12**p - 1) * np.fabs(f1 - f2) 
 
 	if (p < 0): # negative order of convergence 
 		# print('p negative')
-		BAD = 1 
+		BAD += 'negative p '
 
 	if (sigma < 0): # negative uncertainty 
-		BAD = 1 
+		BAD += 'negative sigma '
 
 	if (p > 10): # p too large 
 		# print('p > 20')
-		BAD = 1 
+		BAD += 'p too large ' 
 
 	return p, sigma, BAD  
 
@@ -148,7 +153,7 @@ def readGCI(dr, grid, cgrid):
 	C = np.zeros((3, len(cgrid))) # store C for each run on each grid point 
 
 	# store metrics of interest: centerline Ux, centerline k, integral k, integral Ux
-	metricNames = ['U', 'k', 'kint', 'Uint']
+	metricNames = ['U', 'k', 'C', 'kint', 'Uint']
 	metrics = np.zeros((len(metricNames), 3)) 
 	for i in range(3): # loop through number of runs 
 		# get number of volumes 
@@ -165,35 +170,38 @@ def readGCI(dr, grid, cgrid):
 		U[i,:] = Ufunc(grid) # evaluated on grid 
 		kfunc = interp1d(y, k, kind='cubic') # interpolated function, used for integration 
 		K[i,:] = kfunc(grid) # interpolate k onto grid 
-		C[i,:] = interp1d(y, c, kind='cubic')(cgrid)
+		Cfunc = interp1d(y, c, kind='cubic') # concentration interpolated function 
+		C[i,:] = Cfunc(cgrid) # interpolate onto concentration grid 
 
 		# compute GCI metrics 
 		metrics[0,i] = Ufunc(0) # interpolated centerline Ux 
 		metrics[1,i] = kfunc(0) # interpolated centerline k 
-		metrics[2,i] = integrate.quad(kfunc, grid[0], grid[-1])[0] # integral of k 
-		metrics[3,i] = integrate.quad(Ufunc, grid[0], grid[-1])[0] # integral of U 
+		metrics[2,i] = Cfunc(0) # interpolated centerline concentration 
+		metrics[3,i] = integrate.quad(kfunc, grid[0], grid[-1])[0] # integral of k 
+		metrics[4,i] = integrate.quad(Ufunc, grid[0], grid[-1])[0] # integral of U 
 
 	# find order of convergence of all metrics, eliminate bad metrics, 
 	# find max error of good metrics, use relative error on all return metrics 
 	p = np.zeros(len(metrics)) # store order of convergence for each metric 
 	sigma = np.zeros(len(metrics)) # store uncertainty for each metric 
-	bad = np.zeros(len(metrics)) # store bad boolean, throw out if 1 
 	relError = [] # store relative error of good metrics 
 	useMetric = [] # store name of good metrics  
-	useP = [] # store order of convergence of good metrics  
-	for i in range(len(metrics)):
+	useP = [] # store order of convergence of good metrics 
+	for i in range(len(metrics)): # loop through the metrics   
 		# get order of convergence 
-		p[i], sigma[i], bad[i] = calcGCI(metrics[i,:], N) 
+		p[i], sigma[i], bad = calcGCI(metrics[i,:], N) 
 
-		if (bad[i] == 0): # if a good metric 
+		if (bad == ''): # if a good metric 
 			relError.append(sigma[i]/metrics[i,0]) # store relative error of best simulation 
 			useMetric.append(metricNames[i]) # store name of good metric 
 			useP.append(p[i]) # store convergence of good metric 
+		else: # if a bad metric 
+			print(metricNames[i] + ': ' + bad) # print reason 
 
 	if (len(relError) == 0): # all metrics bad 
 		print('WARNING: no good metrics found')
 
-		error = 0 # set error so that plots ok 
+		error = .1 # set error so that plots ok 
 
 	else: # if at least one good metric 
 
@@ -208,7 +216,7 @@ def readGCI(dr, grid, cgrid):
 		U[0,:], U[0,:]*error*np.ones(len(grid)), # return Ux and error 
 		K[0,:], K[0,:]*error*np.ones(len(grid)), # return k and error 
 		C[0,:], C[0,:]*error*np.ones(len(cgrid)) # return concentration and error 
-		)
+		)	
 
 def globalMerit(y_ex, u_ex, sigma_ex, u, sigma, alpha, beta): 
 	''' use omega and differnence in derivatives to calculate global merit 
@@ -260,12 +268,14 @@ def globalMerit(y_ex, u_ex, sigma_ex, u, sigma, alpha, beta):
 
 	return M 
 
-def handle(case, expDir, ofDir, alpha, beta):
+def handle(case, expDir, gciDir, subDir, alpha, beta):
 	''' combines 
 			readExperiment 
 			readGCI 
 			globalMerit
 	''' 
+
+	ofDir = gciDir + subDir 
 
 	# get experimental data 
 	(y_ex, u_ex, sigma_ex, # Ux
@@ -304,8 +314,8 @@ if __name__ == '__main__':
 	alpha = 1 
 	beta = 1 
 
-	gciDir = 'gciData/'
-	# gciDir = 'adaData/'
+	# gciDir = 'gciData/'
+	gciDir = 'adaData/'
 
 	dist = ['050', '150', '250', '350', '450'] 
 	# dist = ['050']
@@ -332,7 +342,8 @@ if __name__ == '__main__':
 			) = handle(
 			case = case, 
 			expDir = dist[i], 
-			ofDir = gciDir + subDirs[i], 
+			gciDir = gciDir,
+			subDir = subDirs[i], 
 			alpha = alpha, 
 			beta = beta)
 
