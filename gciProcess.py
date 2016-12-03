@@ -11,6 +11,8 @@ from scipy.integrate import quadrature
 import scipy.integrate as integrate 
 from scipy.stats import norm
 
+from readFoam import readExperiment
+
 def gaussian(mu, sigma):
 	''' return gaussian with average mu and variance sigma^2 ''' 
 	
@@ -63,42 +65,6 @@ def calcOmega(u_sim, sigma_sim, u_ex, sigma_ex):
 	# print('Omega =', Omega[0], 'Error =', Omega[1])
 
 	return Omega[0] 
-
-def readExperiment(case, dist):
-	''' read in experimental data for location dist ''' 
-	field = ['_PIV_', '_LIF_'] # velocity/k v concentration 
-	if (case == 2):
-		pre = 'N320/'
-		post = 'dr1_u06.dat'
-	elif (case == 1):
-		pre = 'N337/'
-		post = 'dr0_u10.dat'
-	elif (case == 0):
-		pre = 'N339/'
-		post = 'dr0_u06.dat'
-
-	pre = 'data/' + pre + 'X'
-
-	# y, Vx, U_x95, k, kLow, kUp
-	df = np.loadtxt(pre+dist+field[0]+post, skiprows=5, usecols=(1,2,3,15,16,17)) 
-
-	y_ex = df[:,0] # y grid points 
-	u_ex = -df[:,1] # Ux profile 
-	sigma_ex = df[:,2] # 95% uncertainty 
-	k = df[:,3]
-	kLow = df[:,4]
-	kUp = df[:,5] 
-
-	ksigma = (kLow - kUp)/2 
-
-	# y, c, c95 
-	cf = np.loadtxt(pre+dist+field[1]+post, skiprows=3, usecols=(0,1,2))
-
-	y_c = cf[:,0] 
-	c = cf[:,1]
-	sigmac = cf[:,2]
-
-	return y_ex, u_ex, sigma_ex, k, ksigma, y_c, c, sigmac 
 
 def calcGCI(f, N, tol=1e-6):
 	''' computes observed order of convergence and sigma from 
@@ -227,7 +193,7 @@ def readGCI(dr, grid, cgrid):
 	if (len(relError) == 0): # all metrics bad 
 		print('WARNING: no good metrics found')
 
-		error = 1 # set error so that plots ok 
+		error = 0 # set error so that plots ok 
 
 	else: # if at least one good metric 
 
@@ -302,7 +268,11 @@ def handle(case, expDir, ofDir, alpha, beta):
 	''' 
 
 	# get experimental data 
-	y_ex, u_ex, sigma_ex, k_ex, ksigma_ex, yc, c_ex, sigmac_ex = readExperiment(case, expDir)
+	(y_ex, u_ex, sigma_ex, # Ux
+		k_ex, ksigma_ex, # k 
+		yc, c_ex, sigmac_ex, # concentration 
+		x # x location of y profiles 
+		) = readExperiment(case, expDir)
 
 	# get GCI data 
 	u, sigma, k, sigmak, c, sigmac = readGCI(ofDir, y_ex/1000, yc/1000) 
@@ -328,61 +298,62 @@ def handle(case, expDir, ofDir, alpha, beta):
 		Mc # metric for concentration 
 		)  
 
-# get command line arguments 
-# undisclosed weighting factors for M formula 
-alpha = 1 
-beta = 1 
+if __name__ == '__main__':
+	# get command line arguments 
+	# undisclosed weighting factors for M formula 
+	alpha = 1 
+	beta = 1 
 
-gciDir = 'gciData/'
-# gciDir = 'adaData/'
+	gciDir = 'gciData/'
+	# gciDir = 'adaData/'
 
-dist = ['050', '150', '250', '350', '450'] 
-# dist = ['050']
-subDirs = sorted(os.listdir(gciDir)) # get list of subdirectories in gciDir 
+	dist = ['050', '150', '250', '350', '450'] 
+	# dist = ['050']
+	subDirs = sorted(os.listdir(gciDir)) # get list of subdirectories in gciDir 
 
-# get case number 
-f = open(gciDir + 'case', 'r')
-case = int(f.readline())
-f.close()
+	# get case number 
+	f = open(gciDir + 'case', 'r')
+	case = int(f.readline())
+	f.close()
 
-fig1 = plt.figure()
-fig2 = plt.figure()
-fig3 = plt.figure()
-for i in range(len(dist)):
-	(y_ex, u_ex, sigma_ex, 
-		u, sigma, 
-		k_ex, ksigma_ex, 
-		k, sigmak, 
-		yc, c_ex, sigmac_ex, 
-		c, sigmac, 
-		M, 
-		Mk,
-		Mc
-		) = handle(
-		case = case, 
-		expDir = dist[i], 
-		ofDir = gciDir + subDirs[i], 
-		alpha = alpha, 
-		beta = beta)
+	fig1 = plt.figure()
+	fig2 = plt.figure()
+	fig3 = plt.figure()
+	for i in range(len(dist)):
+		(y_ex, u_ex, sigma_ex, 
+			u, sigma, 
+			k_ex, ksigma_ex, 
+			k, sigmak, 
+			yc, c_ex, sigmac_ex, 
+			c, sigmac, 
+			M, 
+			Mk,
+			Mc
+			) = handle(
+			case = case, 
+			expDir = dist[i], 
+			ofDir = gciDir + subDirs[i], 
+			alpha = alpha, 
+			beta = beta)
 
-	# plot Ux 
-	ax1 = fig1.add_subplot(np.ceil(len(dist)/2), 2, i+1) 
-	ax1.errorbar(y_ex, u, yerr=sigma)
-	ax1.errorbar(y_ex, u_ex, yerr=sigma_ex)
-	ax1.set_title('M = ' + str(M))
+		# plot Ux 
+		ax1 = fig1.add_subplot(np.ceil(len(dist)/2), 2, i+1) 
+		ax1.errorbar(y_ex, u, yerr=sigma)
+		ax1.errorbar(y_ex, u_ex, yerr=sigma_ex)
+		ax1.set_title('M = ' + str(M))
 
-	# plot k 
-	ax2 = fig2.add_subplot(np.ceil(len(dist)/2), 2, i+1)
-	ax2.errorbar(y_ex, k, yerr=sigmak)
-	# ax2.plot(y_ex, k)
-	ax2.errorbar(y_ex, k_ex, yerr=ksigma_ex)
-	ax2.set_title('M = ' + str(Mk))
+		# plot k 
+		ax2 = fig2.add_subplot(np.ceil(len(dist)/2), 2, i+1)
+		ax2.errorbar(y_ex, k, yerr=sigmak)
+		# ax2.plot(y_ex, k)
+		ax2.errorbar(y_ex, k_ex, yerr=ksigma_ex)
+		ax2.set_title('M = ' + str(Mk))
 
-	# plot C 
-	ax3 = fig3.add_subplot(np.ceil(len(dist)/2), 2, i+1)
-	ax3.plot(yc, c)
-	plt.plot(yc, c_ex)
-	ax3.set_title('M =' + str(Mc))
+		# plot C 
+		ax3 = fig3.add_subplot(np.ceil(len(dist)/2), 2, i+1)
+		ax3.plot(yc, c)
+		plt.plot(yc, c_ex)
+		ax3.set_title('M =' + str(Mc))
 
 
-plt.show()
+	plt.show()

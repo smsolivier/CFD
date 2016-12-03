@@ -3,25 +3,28 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-test = 1
+case = 0
 
-if (test == 0):
+''' read in experimental data for location dist ''' 
+field = ['_PIV_', '_LIF_'] # velocity/k v concentration 
+if (case == 2):
 	pre = 'N320/'
-	post = '_PIV_dr1_u06.dat'
-elif (test == 1):
+	post = 'dr1_u06.dat'
+elif (case == 1):
 	pre = 'N337/'
-	post = '_PIV_dr0_u10.dat'
-elif (test == 2):
+	post = 'dr0_u10.dat'
+elif (case == 0):
 	pre = 'N339/'
-	post = '_PIV_dr0_u06.dat'
+	post = 'dr0_u06.dat'
+
+pre = pre + 'X'
 
 dist = ['050', '150', '250', '350', '450']
-# dist = ['050']
 
 for i in range(len(dist)):
-	df = np.loadtxt(pre+'X'+dist[i]+post, skiprows=5, usecols=(0,1,2,4)) # x, y, Vx, Vy 
+	df = np.loadtxt(pre+dist[i]+field[0]+post, skiprows=5, usecols=(0,1,2)) # x, y, Vx
 
-	print('x =', df[0,0])
+	cf = np.loadtxt(pre+dist[i]+field[1]+post, skiprows=3, usecols=(0,1,2))
 
 	plt.plot(df[:,1], -df[:,2], label=dist[i])
 

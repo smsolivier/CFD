@@ -204,67 +204,97 @@ def parse(xinterp, PLOT=False):
 		plt.show()
 
 	# write to file 
-	if (not(os.path.isdir('misc'))):
-		os.makedirs('misc') 
+	# if (not(os.path.isdir('misc'))):
+	# 	os.makedirs('misc') 
 		
-	f = open('misc/readFoam_' + str(xinterp) + '.txt', 'w')
-	for i in range(len(y1)):
-		f.write(str(y1[i]) + ' ' + str(uinterp[i]) + ' \n')
+	# f = open('misc/readFoam_' + str(xinterp) + '.txt', 'w')
+	# for i in range(len(y1)):
+	# 	f.write(str(y1[i]) + ' ' + str(uinterp[i]) + ' \n')
 
-	f.close()
+	# f.close()
 
 	return y1, uinterp, kinterp, Cinterp  
 
-if __name__ == '__main__':
-
-	import sys 
-
-	case = 0 
-	if (len(sys.argv) == 2):
-		case = int(sys.argv[1]) # get command line case 
-
+def readExperiment(case, dist):
+	''' read in experimental data for location dist ''' 
+	field = ['_PIV_', '_LIF_'] # velocity/k v concentration 
 	if (case == 2):
 		pre = 'N320/'
-		post = '_PIV_dr1_u06.dat'
+		post = 'dr1_u06.dat'
 	elif (case == 1):
 		pre = 'N337/'
-		post = '_PIV_dr0_u10.dat'
+		post = 'dr0_u10.dat'
 	elif (case == 0):
 		pre = 'N339/'
-		post = '_PIV_dr0_u06.dat'
+		post = 'dr0_u06.dat'
 
 	pre = 'data/' + pre + 'X'
 
-	dist = ['050', '150', '250', '350', '450'] # experimental distances
-	d = np.array([.05, .15, .25, .35, .45])
+	# y, Vx, U_x95, k, kLow, kUp, x
+	df = np.loadtxt(pre+dist+field[0]+post, skiprows=5, usecols=(1,2,3,15,16,17,0)) 
 
-	# --- read in experimental data --- 
-	# y_ex stores all y values for all distances 
-	# u_ex stores Ux for all distances 
-	norm = np.zeros(len(dist))
-	plt.figure(figsize=(16,12))
+	y_ex = df[:,0] # y grid points 
+	u_ex = -df[:,1] # Ux profile 
+	sigma_ex = df[:,2] # 95% uncertainty 
+	k = df[:,3]
+	kLow = df[:,4]
+	kUp = df[:,5] 
+
+	ksigma = (kLow - kUp)/2 
+
+	# y, c, c95 
+	cf = np.loadtxt(pre+dist+field[1]+post, skiprows=3, usecols=(0,1,2))
+
+	y_c = cf[:,0] 
+	c = cf[:,1]
+	sigmac = cf[:,2]
+
+	x = -df[0,-1]/1000 # x location of experimental sensor, given as negative in mm 
+
+	return y_ex, u_ex, sigma_ex, k, ksigma, y_c, c, sigmac, x
+
+if __name__ == '__main__':
+	import matplotlib.pyplot as plt 
+
+	import sys 
+
+	case = 0
+	if (len(sys.argv) == 2):
+		case = int(sys.argv[1]) # get command line case 
+
+	dist = ['050', '150', '250', '350', '450'] # experimental distances
+	d = np.array([.053383118, .15, .25, .35, .45])
+
+	fig1 = plt.figure(figsize=(16,12))
+	fig2 = plt.figure(figsize=(16,12))
+	fig3 = plt.figure(figsize=(16,12))
 	for i in range(len(dist)):
 		# read in experimental data 
-		df = np.loadtxt(pre+dist[i]+post, skiprows=5, usecols=(0,1,2)) # x, y, Vx
+		y_ex, u_ex, sigma_ex, k_ex, ksigma, y_c, c_ex, sigmac_ex, x = readExperiment(case, dist[i])
 
-		y_ex = df[:,1]
-		u_ex = -df[:,2] 
+		# get openfoam data 
+		y, u, k, C = parse(x) 
 
-		y, u, k, C = parse(d[i])
+		y *= 1000 # convert to mm 
 
-		uinterp = np.interp(y_ex, y*1000, u) 
+		# plot Ux 
+		ax1 = fig1.add_subplot(np.ceil(len(dist)/2), 2, i+1)
+		ax1.plot(y_ex, u_ex)
+		ax1.plot(y, u)
+		ax1.set_title(str(x))
 
-		norm[i] = np.linalg.norm(uinterp - u_ex, 2)
+		# plot k 
+		ax2 = fig2.add_subplot(np.ceil(len(dist)/2), 2, i+1)
+		ax2.plot(y_ex, k_ex)
+		ax2.plot(y, k)
+		ax2.set_title(str(x))
 
-		plt.subplot(np.ceil(len(dist)/2), 2, i+1)
-		plt.plot(y_ex, u_ex, '-o')
-		plt.plot(y*1000, u)
-		# plt.plot(y_ex, uinterp, '-o')
+		# plot concentration 
+		ax3 = fig3.add_subplot(np.ceil(len(dist)/2), 2, i+1)
+		ax3.plot(y_c, c_ex)
+		ax3.plot(y, C)
+		ax3.set_title(str(x)) 
 
-		plt.title(dist[i])
-
-	for i in range(len(dist)):
-		print(dist[i], norm[i])
 
 	plt.show()
 

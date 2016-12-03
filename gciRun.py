@@ -11,6 +11,8 @@ import Timer
 
 import readFoam as rf 
 
+from readFoam import readExperiment # gets experimental values 
+
 ''' runs ./run 3 times and writes y profile at each experimental distance ''' 
 
 # --- set up three runs --- 
