@@ -22,6 +22,7 @@ startFrom       latestTime;
 startTime       0;
 
 stopAt          endTime;
+// stopAt			writeNow; // use to stop simulation and write at last time step 
 
 endTime         2; 
 
