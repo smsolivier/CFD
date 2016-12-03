@@ -17,7 +17,7 @@ FoamFile
 convertToMeters 0.001;
 
 Nx1 10; 
-Nx2 50; 
+Nx2 40; 
 Ny 20; 
 Nz 20; 
 

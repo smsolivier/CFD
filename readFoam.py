@@ -253,6 +253,13 @@ def readExperiment(case, dist):
 
 	return y_ex, u_ex, sigma_ex, k, ksigma, y_c, c, sigmac, x
 
+def compare(grid_ex, val_ex, grid, val):
+	interp = np.interp(grid_ex, grid, val)
+
+	norm = np.linalg.norm(val_ex - interp, 2)
+
+	return norm 
+
 if __name__ == '__main__':
 	import matplotlib.pyplot as plt 
 
@@ -281,19 +288,22 @@ if __name__ == '__main__':
 		ax1 = fig1.add_subplot(np.ceil(len(dist)/2), 2, i+1)
 		ax1.plot(y_ex, u_ex)
 		ax1.plot(y, u)
-		ax1.set_title(str(x))
+		ax1.set_title(str(x) + ', ' + str(compare(y_ex, u_ex, y, u)))
+		ax1.set_xlim(y_ex[0], y_ex[-1])
 
 		# plot k 
 		ax2 = fig2.add_subplot(np.ceil(len(dist)/2), 2, i+1)
 		ax2.plot(y_ex, k_ex)
 		ax2.plot(y, k)
-		ax2.set_title(str(x))
+		ax2.set_title(str(x) + ', ' + str(compare(y_ex, k_ex, y, k)))
+		ax2.set_xlim(y_ex[0], y_ex[-1])
 
 		# plot concentration 
 		ax3 = fig3.add_subplot(np.ceil(len(dist)/2), 2, i+1)
 		ax3.plot(y_c, c_ex)
 		ax3.plot(y, C)
-		ax3.set_title(str(x)) 
+		ax3.set_title(str(x) + ', ' + str(compare(y_c, c_ex, y, C))) 
+		ax3.set_xlim(y_c[-1], y_c[0])
 
 
 	plt.show()

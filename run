@@ -265,9 +265,9 @@ if (not(args.setupOnly)): # run if not in setupOnly mode
 
 	# run pipe into log 
 	if (args.interFoam): # run interFoam 
-		runcmd('mpirun -np ' + str(np) + ' interFoam -parallel | tee log')
+		runcmd('mpirun -np ' + str(np) + ' interFoam -parallel > log')
 	else: # run twoLiquidMixingFoam 
-		runcmd('mpirun -np ' + str(np) + ' twoLiquidMixingFoam -parallel | tee log')
+		runcmd('mpirun -np ' + str(np) + ' twoLiquidMixingFoam -parallel > log')
 
 	runcmd('reconstructPar') # reconstruct parallel folders 
 
