@@ -2,7 +2,6 @@
 NUEN 489 GEMIX Project
 ## To Do 
 * Update inlet to write boundary conditions for omega, epsilon using formulas 
-* Switch to twoLiquidMixingFoam
 * simpleFoam comparison to make sure interFoam isn't buggy 
 * Sensitivity analysis
 * Model error 
