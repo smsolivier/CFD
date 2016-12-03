@@ -44,7 +44,7 @@ solvers
         }
         tolerance       1e-5;
         relTol          0;
-        maxIter         50;
+        // maxIter         50;
     }
 
     p_rgh

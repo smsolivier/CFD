@@ -17,18 +17,20 @@ FoamFile
 
 phases (upper lower);
 
+Dab           [0 2 -1 0 0 0 0]    1e-06; 
+alphatab      [0 0 0 0 0 0 0]     1; 
+
 upper
 {
     transportModel  Newtonian;
-    nu              [0 2 -1 0 0 0 0] 1.004e-5;
+    nu              [0 2 -1 0 0 0 0] 1.004e-6;
     rho             [1 -3 0 0 0 0 0] 998;
-    // rho             [1 -3 0 0 0 0 0] 2000;
 }
 
 lower
 {
     transportModel  Newtonian;
-    nu              [0 2 -1 0 0 0 0] 1.004e-5;
+    nu              [0 2 -1 0 0 0 0] 1.004e-6;
     rho             [1 -3 0 0 0 0 0] 998;
 }
 

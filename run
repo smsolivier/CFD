@@ -37,7 +37,6 @@ parser.add_argument('-N',
 	metavar=('NxInlet', 'NxMixing', 'Ny', 'Nz'),
 	help='number of cells'
 	)
-# run in 3D 
 # threeD option replaced by specify Nz > 1 
 # parser.add_argument('-threeD', action='store_true', default=False, help='run in 3D')
 # use k-Epsilon 
@@ -51,13 +50,21 @@ parser.add_argument('-quiet', action='store_true', help='suppress notification w
 # make mesh only 
 parser.add_argument('-setupOnly', action='store_true', help='run setup commands but do not run interFoam')
 # don't remove previous times 
-parser.add_argument('-cont', action='store_false', help='continue from latest time')
+parser.add_argument('-cont', action='store_true', help='continue from latest time')
 # use simple geometry 
 parser.add_argument('-simple', action='store_true', help='use geometry without angled inlets')
 # run readFoam.py to compare answer to data 
 parser.add_argument('-readFoam', action='store_true', help='run readFoam.py to plot the answer and experimental data')
 # specify which case to run 
 parser.add_argument('-case', type=int, default=0, help='0: N339, 1: N337, 2: N320')
+
+# specify diffusivity 
+parser.add_argument('-Dab', type=float, default=1e-6, help='diffusivity used in twoLiquidMixingFoam')
+# alphatab (1/Schmidt number)
+parser.add_argument('-alphatab', type=float, default=1, help='alpha tab used in twoLiquidMixingFoam')
+
+# use interFoam 
+parser.add_argument('-interFoam', action='store_true', help='use interFoam instead of twoLiquidMixingFoam')
 
 
 
@@ -205,6 +212,22 @@ elif (args.case == 2): # N320, .6 m/s, different density
 # --- copy density file to constant/transportProperties --- 
 copyfile(densityFile, 'constant/transportProperties')
 
+# --- set Dab in constant/transportProperties --- 
+f = open('constant/transportProperties', 'r')
+string = '' # store transportProperties file 
+for line in f:
+	if (line.startswith('Dab')):
+		string += 'Dab           [0 2 -1 0 0 0 0]    ' + str(args.Dab) + '; \n'
+	elif (line.startswith('alphatab')):
+		string += 'alphatab      [0 0 0 0 0 0 0]     ' + str(args.alphatab) + '; \n'
+	else:
+		string += line 
+f.close()
+# write string to constant/transportProperties 
+f = open('constant/transportProperties', 'w')
+f.write(string) 
+f.close()
+
 
 # --- run commands --- 
 def runcmd(cmd):
@@ -215,7 +238,7 @@ def runcmd(cmd):
 
 tt = Timer.timer() # start timer 
 
-if (args.cont):
+if (not(args.cont)): # if not a continue run 
 	runcmd('foamListTimes -rm') # delete previous time steps 
 
 	if (os.path.isfile('0/yPlus')): # remove previous yPlus 
@@ -225,27 +248,34 @@ if (args.cont):
 	if (os.path.isfile('0/V')):
 		runcmd('rm 0/V')
 
+	# remove writeCellCentres if they exist 
 	if (os.path.isfile('0/ccx')):
 		runcmd('rm 0/ccx 0/ccy 0/ccz')
 
 	runcmd('blockMesh') # generate mesh 
 
-	####################### My Changes ########################
+	# generate inlet conditions, write to 0 folder 
 	generateInlet(inletVelocity, args.interpolation, args.PLOT, args.STATUS)
-	###########################################################	
 
 if (not(args.setupOnly)): # run if not in setupOnly mode 
 
 	# decompose for parallel run, -force overwrite current directories 
-	if (args.cont):
+	if (not(args.cont)): # if not a continue run 
 		runcmd('decomposePar -force') 
 
 	# run pipe into log 
-	runcmd('mpirun -np ' + str(np) + ' interFoam -parallel | tee log')
+	if (args.interFoam): # run interFoam 
+		runcmd('mpirun -np ' + str(np) + ' interFoam -parallel > log')
+	else: # run twoLiquidMixingFoam 
+		runcmd('mpirun -np ' + str(np) + ' twoLiquidMixingFoam -parallel > log')
 
 	runcmd('reconstructPar') # reconstruct parallel folders 
 
-	runcmd('interFoam -postProcess -func yPlus') # generate yPlus 
+	# yPlus 
+	if (args.interFoam): # use interfoam 
+		runcmd('interFoam -postProcess -func yPlus') # generate yPlus 
+	else:
+		runcmd('twoLiquidMixingFoam -postProcess -func yPlus')
 
 print('Number of Volumes =', NVols)
 
