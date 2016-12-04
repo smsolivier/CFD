@@ -418,7 +418,15 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	if (PLOT == True):
 		plotData = np.array(['matvals', 'posdata', 'veldata', 'matpos',
 			'kdata', 'newVx', 'newVy', 'newVz', 'newK'])
+		
+		# Remove old files
+		for f in plotData:
+			os.system('rm inletPlotData/{}'.format(f))
+		
+		# Save new files
 		for f in plotData:
 			np.savetxt('inletPlotData/'+f, eval(f), delimiter=',')
+			
 		# Runs a python script in the background to plot the data
+		# This has been removed to work better with Ada
 		# os.system('python3 inletPlot.py &')
