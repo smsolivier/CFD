@@ -45,6 +45,7 @@ Reads inlet data and writes to 0/U and 0/k before running.
 
 ## inletPlot.py
 Used along with the -PLOT flag during the program execution. Shows a 3D scatter plot of the cell center locations overlayed on the upper and lower inlets and a color map of the 4 inlet conditions (x, y, and z velocity and turbulent kinetic energy) for each cell. This allows to visually verify that the cell centers are in the correct position and appear to take the correct distribution.
+* run this file after running generateInlet.py, it reads to files created during the setup using the -PLOT flag
 
 ## fRe.py
 Reads in a CSV file of the axial pressure to calculate the fRe product. 
