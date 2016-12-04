@@ -421,4 +421,4 @@ def generateInlet(data, scheme, PLOT, STATUS):
 		for f in plotData:
 			np.savetxt('inletPlotData/'+f, eval(f), delimiter=',')
 		# Runs a python script in the background to plot the data
-		os.system('python3 inletPlot.py &')
+		# os.system('python3 inletPlot.py &')
