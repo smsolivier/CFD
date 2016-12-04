@@ -101,8 +101,4 @@ gx.set_xlim(-30,30)
 hx.set_xlim(-30,30)
 #####################################################################
 
-# Remove the files
-for f in plotData:
-	os.system('rm inletPlotData/{}'.format(f))
-
 plt.show()
