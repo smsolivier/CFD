@@ -1,9 +1,23 @@
 #!/usr/bin/env python3 
 
 import numpy as np 
-
+import matplotlib.pyplot as plt 
 import os 
 import sys 
+
+def readInterp(dr):
+	dr += '/'
+	dist = sorted(os.listdir(dr)) # distance subdirectories in dr 
+
+	for i in range(len(dist)):
+		currentDir = dr + dist[i] + '/'
+		uf = np.loadtxt(currentDir+'U')
+		kf = np.loadtxt(currentDir+'k')
+		cf = np.loadtxt(currentDir+'C')
+
+		plt.plot(cf[:,0], cf[:,1])
+
+	plt.show()
 
 def interpolate(xinterp, r, val):
 	N = len(val)
@@ -264,52 +278,54 @@ def compare(grid_ex, val_ex, grid, val):
 	return norm 
 
 if __name__ == '__main__':
-	import matplotlib.pyplot as plt 
 
-	import sys 
+	readInterp('output')
+	# import matplotlib.pyplot as plt 
 
-	case = 0
-	if (len(sys.argv) == 2):
-		case = int(sys.argv[1]) # get command line case 
+	# import sys 
 
-	dist = ['050', '150', '250', '350', '450'] # experimental distances
-	d = np.array([.053383118, .15, .25, .35, .45])
+	# case = 0
+	# if (len(sys.argv) == 2):
+	# 	case = int(sys.argv[1]) # get command line case 
 
-	fig1 = plt.figure(figsize=(16,12))
-	fig2 = plt.figure(figsize=(16,12))
-	fig3 = plt.figure(figsize=(16,12))
-	for i in range(len(dist)):
-		# read in experimental data 
-		y_ex, u_ex, sigma_ex, k_ex, ksigma, y_c, c_ex, sigmac_ex, x = readExperiment(case, dist[i])
+	# dist = ['050', '150', '250', '350', '450'] # experimental distances
+	# d = np.array([.053383118, .15, .25, .35, .45])
 
-		# get openfoam data 
-		y, u, k, C = parse(x) 
+	# fig1 = plt.figure(figsize=(16,12))
+	# fig2 = plt.figure(figsize=(16,12))
+	# fig3 = plt.figure(figsize=(16,12))
+	# for i in range(len(dist)):
+	# 	# read in experimental data 
+	# 	y_ex, u_ex, sigma_ex, k_ex, ksigma, y_c, c_ex, sigmac_ex, x = readExperiment(case, dist[i])
 
-		y *= 1000 # convert to mm 
+	# 	# get openfoam data 
+	# 	y, u, k, C = parse(x) 
 
-		# plot Ux 
-		ax1 = fig1.add_subplot(np.ceil(len(dist)/2), 2, i+1)
-		ax1.plot(y_ex, u_ex)
-		ax1.plot(y, u)
-		ax1.set_title(str(x) + ', ' + str(compare(y_ex, u_ex, y, u)))
-		ax1.set_xlim(y_ex[0], y_ex[-1])
+	# 	y *= 1000 # convert to mm 
 
-		# plot k 
-		ax2 = fig2.add_subplot(np.ceil(len(dist)/2), 2, i+1)
-		ax2.plot(y_ex, k_ex)
-		ax2.plot(y, k)
-		ax2.set_title(str(x) + ', ' + str(compare(y_ex, k_ex, y, k)))
-		ax2.set_xlim(y_ex[0], y_ex[-1])
+	# 	# plot Ux 
+	# 	ax1 = fig1.add_subplot(np.ceil(len(dist)/2), 2, i+1)
+	# 	ax1.plot(y_ex, u_ex)
+	# 	ax1.plot(y, u)
+	# 	ax1.set_title(str(x) + ', ' + str(compare(y_ex, u_ex, y, u)))
+	# 	ax1.set_xlim(y_ex[0], y_ex[-1])
 
-		# plot concentration 
-		ax3 = fig3.add_subplot(np.ceil(len(dist)/2), 2, i+1)
-		ax3.plot(y_c, c_ex)
-		ax3.plot(y, C)
-		ax3.set_title(str(x) + ', ' + str(compare(y_c, c_ex, y, C))) 
-		ax3.set_xlim(y_c[-1], y_c[0])
+	# 	# plot k 
+	# 	ax2 = fig2.add_subplot(np.ceil(len(dist)/2), 2, i+1)
+	# 	ax2.plot(y_ex, k_ex)
+	# 	ax2.plot(y, k)
+	# 	ax2.set_title(str(x) + ', ' + str(compare(y_ex, k_ex, y, k)))
+	# 	ax2.set_xlim(y_ex[0], y_ex[-1])
+
+	# 	# plot concentration 
+	# 	ax3 = fig3.add_subplot(np.ceil(len(dist)/2), 2, i+1)
+	# 	ax3.plot(y_c, c_ex)
+	# 	ax3.plot(y, C)
+	# 	ax3.set_title(str(x) + ', ' + str(compare(y_c, c_ex, y, C))) 
+	# 	ax3.set_xlim(y_c[-1], y_c[0])
 
 
-	plt.show()
+	# plt.show()
 
 
 

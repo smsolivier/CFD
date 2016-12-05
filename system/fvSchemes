@@ -15,6 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+// kOmega fvSchemes 
 ddtSchemes
 {
     default         Euler;

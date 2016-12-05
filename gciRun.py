@@ -17,11 +17,10 @@ from readFoam import readExperiment # gets experimental values
 
 # --- set up three runs --- 
 # number of volumes, most volumes to least 
-Nx1 = np.array([20, 20, 20, 20])
-Nx2 = np.array([80, 60, 40, 20])
-Ny = np.array([40, 30, 20, 10])
-# Nz = np.array([30, 20, 10, 10]) 
-Nz = np.ones(4)
+Nx1 = np.array([10, 10, 10, 10])
+Nx2 = np.array([60, 50, 40, 30])
+Ny = np.array([20, 20, 20, 20])
+Nz = np.array([20, 20, 20, 20])
 
 # total volumes for each run 
 N = (Nx1+Nx2)*2*Ny*Nz # number of volumes 
@@ -65,15 +64,9 @@ d = np.array([.05, .15, .25, .35, .45]) # distances to interpolate
 
 # make directory gciData 
 dataDir = 'gciData'
-if (not(os.path.isdir(dataDir))):
-	os.makedirs(dataDir)
-
-# make sub directories for each length 
-for i in range(len(d)):
-	currentDir = dataDir + '/' + str(d[i])[2:] 
-	if (os.path.isdir(currentDir)):
-		shutil.rmtree(currentDir) 
-	os.makedirs(currentDir) 
+if (os.path.isdir(dataDir)):
+	shutil.rmtree(dataDir)
+os.makedirs(dataDir)
 
 # write case to file 
 f = open(dataDir + '/case', 'w')
@@ -82,54 +75,30 @@ f.close()
 
 # loop backwards so largest run is last (can run paraview on best run) 
 for i in range(len(N)-1, -1, -1): # loop through three runs 
-	runstr = './run -N {} {} {} {} -quiet -case {} -np {} {} {}'.format(
+	currentDir = dataDir + '/' + str(N[i]) # current directory of run 
+	# check if exists
+	if (os.path.isdir(currentDir)):
+		shutil.rmtree(currentDir) # overwrite if it exists 
+	os.makedirs(currentDir) # remake 
+
+	runstr = './run \
+		-N {} {} {} {} \
+		-quiet \
+		-case {} \
+		-np {} {} {} \
+		-outDir {}'.format(
 		int(Nx1[i]), # inlet x 
 		int(Nx2[i]), # mixing x 
 		int(Ny[i]), # y vols in each half 
 		int(Nz[i]), # total z vols 
 		case, # which case to run 
-		npx, npy, npz # processor decomposition 
+		npx, npy, npz, # processor decomposition 
+		currentDir # output directory 
 		)
 
 	# run openfoam 
 	x = os.system(runstr)
 	if (x != 0): # exit if problems 
 		sys.exit()
-
-	# print all data points at each distance 
-	for j in range(len(d)):
-		currentDir = dataDir + '/' + str(d[j])[2:] 
-
-		y, u, k, C = readOF(d[j]) 
-		# write to file 
-		f = open(currentDir+'/run' + str(i) + '.txt', 'w')
-		f.write(str(N[i]) + '\n') # write number of volumes at top of file 
-		for l in range(len(y)):
-			# write y, u, k, c 
-			f.write('{:<10e} {:<10e} {:<10e} {:<10e} \n'.format(
-				y[l], # grid points 
-				u[l], # velocities 
-				k[l], # turbelent kinetic energy 
-				C[l] # concentration 
-				)
-			)
-		f.close()
-
-	# save yPlus information 
-	f = open('log', 'r')
-	for line in f:
-		if (line.startswith('yPlus yPlus write:')):
-			next(f)
-			line = next(f) # get line with yplus values 
-			for j in range(len(line)):
-				if (line[j:len('min = ')] == 'min = '):
-					print('found min')
-				elif (line[j:len('max = ')] == 'max = '):
-					print('found max')
-				elif (line[j:len('average = ')] == 'average = '):
-					print('found average')
-	f.close()
-
-
 
 tt.stop() # stop timer 

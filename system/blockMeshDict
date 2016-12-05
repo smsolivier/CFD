@@ -16,10 +16,10 @@ FoamFile
 
 convertToMeters 0.001;
 
-Nx1 20; 
-Nx2 80; 
-Ny 40; 
-Nz 1; 
+Nx1 10; 
+Nx2 60; 
+Ny 20; 
+Nz 20; 
 
 vertices
 (
@@ -69,9 +69,9 @@ blocks
                 (.3 .4 1)
             )
             (
-                (0.35 0.4 5)
+                (0.35 0.4 10)
                 (0.3 0.2 1)
-                (0.35 0.4 .2)
+                (0.35 0.4 .1)
             )
             (
                 (.25 .35 4)
@@ -86,9 +86,9 @@ blocks
                 (.3 .4 1)
             )
             (
-                (0.35 .4 4)
+                (0.35 .4 10)
                 (.3 .2 1)
-                (0.35 .4 .25)
+                (0.35 .4 .1)
             )
             (
                 (.25 .35 4)
@@ -103,9 +103,9 @@ blocks
                 (0.7 0.5 1)
             )
             (
-                (0.35 0.4 5)
+                (0.35 0.4 10)
                 (0.3 0.2 1)
-                (0.35 0.4 .2)
+                (0.35 0.4 .1)
             )
             (
                 (.25 .35 4)
@@ -120,9 +120,9 @@ blocks
                 (0.7 0.5 1)
             )
             (
-                (0.35 .4 4)
+                (0.35 .4 10)
                 (.3 .2 1)
-                (0.35 .4 .25)
+                (0.35 .4 .1)
             )
             (
                 (.25 .35 4)
@@ -149,6 +149,12 @@ boundary
 
             (14 16 6 2)
             (15 17 13 10)
+
+            // Back
+            (0 1 2 3)    //Lower Inlet
+            (14 2 10 15) //Upper Inlet
+            (1 8 18 2)   //Lower Mixing Channel
+            (2 18 9 10)  //Upper Mixing Channel
         );
     }
 
@@ -180,22 +186,24 @@ boundary
         );
     }
 
-    frontBack
+    reflecting
     {
-        type empty;
-        faces
+        type patch; 
+        faces 
         (
-            // Back
-            (0 1 2 3)    //Lower Inlet
-            (14 2 10 15) //Upper Inlet
-            (1 8 18 2)   //Lower Mixing Channel
-            (2 18 9 10)  //Upper Mixing Channel
-
             // Front
             (4 5 6 7)    //Lower Inlet
             (16 6 13 17) //Upper Inlet
             (5 11 19 6)  //Lower Mixing Channel
             (6 19 12 13) //Upper Mixing Channel
+        ); 
+    }
+
+    frontBack
+    {
+        type empty;
+        faces
+        (
         );
     }
 );

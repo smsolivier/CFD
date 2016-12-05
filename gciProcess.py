@@ -129,7 +129,7 @@ def calcGCI(f, N, tol=1e-9):
 
 	return p, sigma, BAD  
 
-def readGCI(dr, grid, cgrid):
+def readGCI(gciDir, subDir, N, grid, cgrid):
 	''' read in data from runGCI 
 		interpolates onto grid 
 		computes metrics for GCI 
@@ -141,12 +141,6 @@ def readGCI(dr, grid, cgrid):
 		uses maximum relative error of surviving metrics 
 		applies uniform uncertainty to all grid points 
 	''' 
-	N = np.zeros(3) # store number of volumes for each run 
-
-	# Ufunc_ex = interp1d(grid, u_ex, kind='cubic') # exact interpolated velocity 
-	# centerU_ex = Ufunc_ex(0) 
-
-	cent = int(len(grid)/2) # center index of grid 
 
 	U = np.zeros((3,len(grid))) # store velocities on grid 
 	K = np.zeros((3, len(grid))) # store k for each run on each grid point 
@@ -156,21 +150,21 @@ def readGCI(dr, grid, cgrid):
 	metricNames = ['U', 'k', 'C', 'kint', 'Uint']
 	metrics = np.zeros((len(metricNames), 3)) 
 	for i in range(3): # loop through number of runs 
-		# get number of volumes 
-		fname = dr + '/run'+str(i)+'.txt'
-		f = open(fname, 'r')
-		N[i] = float(f.readline().strip())
-		f.close()
-
+		curDir = gciDir + str(N[i]) + '/' + subDir + '/' # directory of the run 
 		# read in data 
-		y, u, k, c = np.loadtxt(fname, skiprows=1, unpack=True)
+		# U
+		yu, u = np.loadtxt(curDir+'U', unpack=True, usecols=(0,1)) # y, Ux 
+		# k 
+		yk, k = np.loadtxt(curDir+'k', unpack=True)
+		# C
+		yc, c = np.loadtxt(curDir+'C', unpack=True)
 
 		# interpolate onto grid 
-		Ufunc = interp1d(y, u, kind='cubic') # interpolated function 
+		Ufunc = interp1d(yu, u, kind='cubic') # interpolated function 
 		U[i,:] = Ufunc(grid) # evaluated on grid 
-		kfunc = interp1d(y, k, kind='cubic') # interpolated function, used for integration 
+		kfunc = interp1d(yk, k, kind='cubic') # interpolated function, used for integration 
 		K[i,:] = kfunc(grid) # interpolate k onto grid 
-		Cfunc = interp1d(y, c, kind='cubic') # concentration interpolated function 
+		Cfunc = interp1d(yc, c, kind='cubic') # concentration interpolated function 
 		C[i,:] = Cfunc(cgrid) # interpolate onto concentration grid 
 
 		# compute GCI metrics 
@@ -195,13 +189,13 @@ def readGCI(dr, grid, cgrid):
 			relError.append(sigma[i]/metrics[i,0]) # store relative error of best simulation 
 			useMetric.append(metricNames[i]) # store name of good metric 
 			useP.append(p[i]) # store convergence of good metric 
-		else: # if a bad metric 
-			print(metricNames[i] + ': ' + bad) # print reason 
+		# else: # if a bad metric 
+			# print(metricNames[i] + ': ' + bad) # print reason 
 
 	if (len(relError) == 0): # all metrics bad 
-		print('WARNING: no good metrics found')
+		print(subDir, 'no good metrics found')
 
-		error = .1 # set error so that plots ok 
+		error = 0 # set error so that plots ok 
 
 	else: # if at least one good metric 
 
@@ -210,7 +204,7 @@ def readGCI(dr, grid, cgrid):
 
 		error = relError[ind] # maximum relative error 
 
-		print(useMetric[ind], useP[ind], error)
+		print(subDir, useMetric[ind], useP[ind], error)
 
 	return ( # parenthesis make able to return on multiple lines 
 		U[0,:], U[0,:]*error*np.ones(len(grid)), # return Ux and error 
@@ -284,8 +278,10 @@ def handle(case, expDir, gciDir, subDir, alpha, beta):
 		x # x location of y profiles 
 		) = readExperiment(case, expDir)
 
+	N = np.array([3200, 2800, 2400])
+
 	# get GCI data 
-	u, sigma, k, sigmak, c, sigmac = readGCI(ofDir, y_ex/1000, yc/1000) 
+	u, sigma, k, sigmak, c, sigmac = readGCI(gciDir, subDir, N, y_ex/1000, yc/1000) 
 
 	# compute M 
 	M = globalMerit(y_ex, u_ex, sigma_ex, u, sigma, alpha, beta)
@@ -314,8 +310,8 @@ if __name__ == '__main__':
 	alpha = 1 
 	beta = 1 
 
-	# gciDir = 'gciData/'
-	gciDir = 'adaData/'
+	gciDir = 'gciData/'
+	# gciDir = 'adaData/'
 
 	dist = ['050', '150', '250', '350', '450'] 
 	# dist = ['050']
@@ -343,27 +339,26 @@ if __name__ == '__main__':
 			case = case, 
 			expDir = dist[i], 
 			gciDir = gciDir,
-			subDir = subDirs[i], 
+			subDir = dist[i], 
 			alpha = alpha, 
 			beta = beta)
 
 		# plot Ux 
 		ax1 = fig1.add_subplot(np.ceil(len(dist)/2), 2, i+1) 
-		ax1.errorbar(y_ex, u, yerr=sigma)
+		ax1.errorbar(y_ex, u, yerr=sigma, color='g')
 		ax1.errorbar(y_ex, u_ex, yerr=sigma_ex)
 		ax1.set_title('M = ' + str(M))
 
 		# plot k 
 		ax2 = fig2.add_subplot(np.ceil(len(dist)/2), 2, i+1)
-		ax2.errorbar(y_ex, k, yerr=sigmak)
-		# ax2.plot(y_ex, k)
+		ax2.errorbar(y_ex, k, yerr=sigmak, color='g')
 		ax2.errorbar(y_ex, k_ex, yerr=ksigma_ex)
 		ax2.set_title('M = ' + str(Mk))
 
 		# plot C 
 		ax3 = fig3.add_subplot(np.ceil(len(dist)/2), 2, i+1)
-		ax3.plot(yc, c)
-		plt.plot(yc, c_ex)
+		ax3.errorbar(yc, c, yerr=sigmac, color='g')
+		plt.errorbar(yc, c_ex, yerr=sigmac_ex)
 		ax3.set_title('M =' + str(Mc))
 
 

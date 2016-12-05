@@ -8,6 +8,10 @@ import argparse
 
 from shutil import copyfile # copy files 
 
+import numpy as np 
+import matplotlib.pyplot as plt 
+
+import shutil
 
 ####################### My Changes ########################
 from generateInlet import *
@@ -66,7 +70,8 @@ parser.add_argument('-alphatab', type=float, default=1, help='alpha tab used in 
 # use interFoam 
 parser.add_argument('-interFoam', action='store_true', help='use interFoam instead of twoLiquidMixingFoam')
 
-
+# set output directory 
+parser.add_argument('-outDir', type=str, default='output', help='set output directory of interpolated Ux, k, C')
 
 ####################### My Changes ########################
 # specify case instead 
@@ -92,12 +97,14 @@ if not(''.join(args.interpolation) == 'nearest'
 	error('Invalid interpolation method - use either \'nearest\', \'linear\', or \'cubic\'')
 ###########################################################
 
+xoutput = [.05, .15, .25, .35, .45] # list of interpolation distances 
+
 # get number of processors in x, y, z 
 npx = int(args.np[0])
 npy = int(args.np[1])
 npz = int(args.np[2])
 
-np = npx * npy * npz # total number of cells 
+nprocs = npx * npy * npz # total number of cells 
 
 # number of cells 
 Nx1 = int(args.N[0])
@@ -133,7 +140,7 @@ string = ''
 for line in f:
 	# change number of subdomains 
 	if (line.startswith('numberOfSubdomains')):
-		string += 'numberOfSubdomains ' + str(np) + ';\n'
+		string += 'numberOfSubdomains ' + str(nprocs) + ';\n'
 
 	# change Nx Ny Nz 
 	elif ('n (' in line):
@@ -254,6 +261,7 @@ def runcmd(cmd):
 	''' run command cmd and exit if errors ''' 
 	x = os.system(cmd)
 	if (x != 0):
+		print('ERROR: ' + cmd)
 		sys.exit()
 
 tt = Timer.timer() # start timer 
@@ -272,7 +280,7 @@ if (not(args.cont)): # if not a continue run
 	if (os.path.isfile('0/ccx')):
 		runcmd('rm 0/ccx 0/ccy 0/ccz')
 
-	runcmd('blockMesh') # generate mesh 
+	runcmd('blockMesh > log') # generate mesh 
 
 	# generate inlet conditions, write to 0 folder 
 	generateInlet(inletVelocity, args.interpolation, args.PLOT, args.STATUS)
@@ -281,21 +289,83 @@ if (not(args.setupOnly)): # run if not in setupOnly mode
 
 	# decompose for parallel run, -force overwrite current directories 
 	if (not(args.cont)): # if not a continue run 
-		runcmd('decomposePar -force') 
+		runcmd('decomposePar -force > log') 
 
-	# run pipe into log 
-	if (args.interFoam): # run interFoam 
-		runcmd('mpirun -np ' + str(np) + ' interFoam -parallel > log')
-	else: # run twoLiquidMixingFoam 
-		runcmd('mpirun -np ' + str(np) + ' twoLiquidMixingFoam -parallel > log')
+	# run pipe into log
+	runcmd('mpirun -np ' + str(nprocs) + ' ' + application + ' -parallel | tee log')
 
-	runcmd('reconstructPar') # reconstruct parallel folders 
+	runcmd('reconstructPar > /dev/null') # reconstruct parallel folders 
 
-	# yPlus 
-	if (args.interFoam): # use interfoam 
-		runcmd('interFoam -postProcess -func yPlus >> log') # generate yPlus 
-	else:
-		runcmd('twoLiquidMixingFoam -postProcess -func yPlus >> log')
+	# get yPlus 
+	runcmd(application + ' -postProcess -func yPlus > /dev/null')
+
+
+	# --- process output into output/ --- 
+	# write Ux, k, concentration to output directory 
+
+	# get highest time directory name 
+	tdir = '0'
+	# find highest time directory 
+	for f in os.listdir('.'):
+		if (f[0].isdigit() and os.path.isdir(f)):
+			if (float(f) > float(tdir)):
+				tdir = f 
+	tdir += '/'
+
+	graphDir = 'postProcessing/singleGraph/' + tdir # location of singleGraph plots 
+	outDir = args.outDir + '/' # directory to store plots into 
+	# make sure outDir exists
+	if (os.path.isdir(outDir)):
+		shutil.rmtree(outDir)
+	os.makedirs(outDir)
+
+	# run singleGraph for each distance in xoutput 
+	for i in range(len(xoutput)):
+		loc = '{:0>3}'.format(int(xoutput[i]*1000)) # distance in mm 
+		# make subdirectory for each distance in xoutput 
+		if (os.path.isdir(outDir+loc)):
+			shutil.rmtree(outDir+loc)
+		os.makedirs(outDir+loc)
+
+		currentDir = outDir + loc + '/'
+
+		# write singleGraph x distance to interpolate to 
+		f = open('system/singleGraph', 'r')
+		string = '' 
+		for line in f:
+			if line.startswith('L '):
+				string += 'L {}; \n'.format(xoutput[i])
+			else:
+				string += line 
+		f.close()
+		f = open('system/singleGraph', 'w')
+		f.write(string)
+		f.close()
+
+		# make graph 
+		runcmd(application + ' -postProcess -func singleGraph > /dev/null')
+
+		# write Ux to file 
+		df = np.loadtxt(graphDir+'line_U.xy') # get y, Ux 
+
+		f = open(currentDir+'U', 'w')
+		for j in range(np.shape(df)[0]):
+			f.write('{} {} \n'.format(df[j,0], df[j,1]))
+
+		f.close()
+
+		# write k and concentration to file 
+		cf = np.loadtxt(graphDir+'line_k_alpha.upper.xy') # y, k, alpha.upper 
+
+		f = open(currentDir + 'k', 'w')
+		g = open(currentDir + 'C', 'w')
+
+		for j in range(np.shape(cf)[0]):
+			f.write('{} {} \n'.format(cf[j,0], cf[j,1]))
+			g.write('{} {} \n'.format(cf[j,0], cf[j,2]))
+
+		f.close()
+		g.close()
 
 
 print('Number of Volumes =', NVols)

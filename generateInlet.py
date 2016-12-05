@@ -122,7 +122,7 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	# Find the location of the cell centered files (either in '/0' or '/constant')
 	FOUND = False
 
-	print("Checking for cell center file locations... ", end='')
+	# print("Checking for cell center file locations... ", end='')
 	for root, dirs, files in os.walk(projectPATH):
 		for file in files:
 			# print(os.path.join(root, file))
@@ -134,21 +134,21 @@ def generateInlet(data, scheme, PLOT, STATUS):
 					centersPATH = root + '/'
 
 	if (FOUND):
-		print("Found.")
-		print("Removing previous cell center postions... ", end='')
+		# print("Found.")
+		# print("Removing previous cell center postions... ", end='')
 		for coord in cellCenters:
 			os.system('rm {}'.format(centersPATH+coord))
-		print("Done!")
-		print("Rerunning 'writeCellCentres'... ")
-	else:
-		print("Not found.")
-		print("\nRunning 'writeCellCentres'...", end='')
+		# print("Done!")
+		# print("Rerunning 'writeCellCentres'... ")
+	# else:
+		# print("Not found.")
+		# print("\nRunning 'writeCellCentres'...", end='')
 
-	os.system('writeCellCentres')
+	os.system('writeCellCentres > /dev/null')
 	REMOVE = True
 
-	print("Done!")
-	print("Rechecking cell center file locations... ", end='')
+	# print("Done!")
+	# print("Rechecking cell center file locations... ", end='')
 	for root, dirs, files in os.walk(projectPATH):
 		for file in files:
 			# print(os.path.join(root, file)) # prints every file found
@@ -157,13 +157,13 @@ def generateInlet(data, scheme, PLOT, STATUS):
 						and ('processor' not in root)
 						and ('0.' not in root)):
 					centersPATH = root + '/'
-	print("Done!")
+	# print("Done!")
 	#####################################################################
 
 	listvals = []
 	# Read the file and gather the coordinates into a list
 	for coord, name in enumerate(cellCenters):
-		print("Reading cell centers from '{}'... ".format(centersPATH+name), end='')
+		# print("Reading cell centers from '{}'... ".format(centersPATH+name), end='')
 		current = open(centersPATH+name, 'r')
 		for pos, patch in enumerate(patches):
 			dummy = grabValues(current, patch)
@@ -173,7 +173,7 @@ def generateInlet(data, scheme, PLOT, STATUS):
 				print("\t", dummy)
 				print("\tTotal of {} values.".format(len(dummy)))
 		current.close()
-		print("Done!\n")
+		# print("Done!\n")
 
 	#####################################################################
 	# 'listvals' has all the x, y, and z coordinates for the top & bottom inlets
@@ -191,12 +191,12 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	nBottomCells = len(listvals[1])
 	nCells = nTopCells + nBottomCells
 
-	print("Saving cell center positions in a matrix... ", end='')
+	# print("Saving cell center positions in a matrix... ", end='')
 	matvals = np.zeros([nCells, 3])
 	# Convert the list coordinates into matrix form
 	for i in range(3):
 		matvals[:,i] = np.concatenate(listvals[2*i:2*(i+1)])*conversion
-	print("Done!")
+	# print("Done!")
 	if (STATUS == True):
 		print("There are a total of {} cell centers ({} for '{}' and {} for '{}')".format(
 			nCells, nTopCells, patches[0], nBottomCells, patches[1]))
@@ -213,7 +213,7 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	#####################################################################
 	# Load in the data for interpolation
 	#####################################################################
-	print("Reading inlet data from '{}'... ".format(projectPATH+'/data/'+data), end='\n')
+	# print("Reading inlet data from '{}'... ".format(projectPATH+'/data/'+data), end='\n')
 	lines = readin(projectPATH+'/data/'+data, skip=5)
 	cols = np.array(["x", "y", "z", "Vx", "U_x95", "Vy", "U_y95", "Vz", "U_z95",
 		"RMSVx", "RMSVxUpper", "RMSVxLower", "RMSVy", "RMSVyUpper", "RMSVyLower",
@@ -245,7 +245,7 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	uveldata = np.zeros([nRows, 3])
 	kdata = np.zeros(nRows)
 	ukdata = np.zeros([nRows, 2])
-	print('  *Assuming 95% confidence means exactly 2 standard deviations (which is actually 95.45%)')
+	# print('  *Assuming 95% confidence means exactly 2 standard deviations (which is actually 95.45%)')
 	# Extract the needed position and velocity data
 	fmt = '%+.5e'
 	for i in range(nRows):
@@ -264,14 +264,14 @@ def generateInlet(data, scheme, PLOT, STATUS):
 			print("\tk (lower,upper): {} ({}, {})".format(fmt%kdata[i],fmt%ukdata[i,0],fmt%ukdata[i,1]))
 			if (i == nRows-1):
 				print("There are a total of {} inlet data points.".format(i))
-	print("Done!")
+	# print("Done!")
 	#####################################################################
 
 	##########################################################################
 	# Print the interpolated inlet conditions to the input file
 	##########################################################################
 	# Reformat the data points taken from OpenFOAM to work nicely with SciPy's 'griddata'
-	print("Interpolating U inlet conditions using '{}' scheme... ".format(scheme), end='')
+	# print("Interpolating U inlet conditions using '{}' scheme... ".format(scheme), end='')
 	n = len(matvals[:,2])
 	matpos = np.zeros([n,2])
 	for i in range(n):
@@ -286,7 +286,7 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	newVz = griddata(posdata,
 		veldata[:,2],
 		matpos, method=scheme)
-	print("Done!")
+	# print("Done!")
 
 	##########################################################################
 	# ### This integrates over the cross-section to determine the average velocity
@@ -301,7 +301,7 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	# print("Average Velocity =", np.mean(V))
 	##########################################################################
 
-	print("Gathering current U inlet conditions from '{}'... ".format(projectPATH+'/0/'+'U'), end='')
+	# print("Gathering current U inlet conditions from '{}'... ".format(projectPATH+'/0/'+'U'), end='')
 	lines = readin(projectPATH+'/0/'+'U')
 	topFound = False
 	botFound = False
@@ -322,9 +322,9 @@ def generateInlet(data, scheme, PLOT, STATUS):
 			botEndPos = i
 			botFound = False
 			# print("Found the ending of '{}' at line {}.".format(patches[1], i))
-	print("Done!")
+	# print("Done!")
 
-	print("Writing interpolated U inlet conditions to '{}'... ".format(projectPATH+'/0/'+'U'), end='')
+	# print("Writing interpolated U inlet conditions to '{}'... ".format(projectPATH+'/0/'+'U'), end='')
 	# Print everything to a new file
 	# Print the beginning of the file up till the inlet patch conditions
 	fmt = '%.15f'
@@ -356,19 +356,19 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	for i in np.arange(botEndPos,len(lines)):
 		f.write(lines[i])
 	f.close()
-	print("Done!")
+	# print("Done!")
 	##########################################################################
 
 	##########################################################################
 	# Repeat the exact same process above for the inlet turbulent kinetic energy values
 	##########################################################################
-	print("Interpolating k inlet conditions using '{}' scheme... ".format(scheme), end='')
+	# print("Interpolating k inlet conditions using '{}' scheme... ".format(scheme), end='')
 	newK = griddata(posdata,
 		kdata[:],
 		matpos, method=scheme)
-	print("Done!")
+	# print("Done!")
 
-	print("Gathering current k inlet conditions from '{}'... ".format(projectPATH+'/0/'+'k'), end='')
+	# print("Gathering current k inlet conditions from '{}'... ".format(projectPATH+'/0/'+'k'), end='')
 	lines = readin(projectPATH+'/0/'+'k')
 	topFound = False
 	botFound = False
@@ -385,9 +385,9 @@ def generateInlet(data, scheme, PLOT, STATUS):
 		elif (botFound == True and line.strip() == '}'):
 			botEndPos = i
 			botFound = False
-	print("Done!")
+	# print("Done!")
 
-	print("Writing interpolated k inlet conditions to '{}'... ".format(projectPATH+'/0/'+'k'), end='')
+	# print("Writing interpolated k inlet conditions to '{}'... ".format(projectPATH+'/0/'+'k'), end='')
 	f = open(projectPATH+'/0/'+'k', 'w')
 	for i in np.arange(topStartPos+1):
 		f.write(lines[i])
@@ -412,7 +412,7 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	for i in np.arange(botEndPos,len(lines)):
 		f.write(lines[i])
 	f.close()
-	print("Done!")
+	# print("Done!")
 	##########################################################################
 
 	if (PLOT == True):
