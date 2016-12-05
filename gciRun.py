@@ -17,10 +17,10 @@ from readFoam import readExperiment # gets experimental values
 
 # --- set up three runs --- 
 # number of volumes, most volumes to least 
-Nx1 = np.array([10, 10, 10, 10])
-Nx2 = np.array([60, 50, 40, 30])
-Ny = np.array([20, 20, 20, 20])
-Nz = np.array([20, 20, 20, 20])
+Nx1 = np.array([10, 10, 10])
+Nx2 = np.array([60, 50, 40])
+Ny = np.array([20, 20, 20])
+Nz = np.array([1, 1, 1])
 
 # total volumes for each run 
 N = (Nx1+Nx2)*2*Ny*Nz # number of volumes 
