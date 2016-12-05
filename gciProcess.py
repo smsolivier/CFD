@@ -195,8 +195,8 @@ def readGCI(dr, grid, cgrid):
 			relError.append(sigma[i]/metrics[i,0]) # store relative error of best simulation 
 			useMetric.append(metricNames[i]) # store name of good metric 
 			useP.append(p[i]) # store convergence of good metric 
-		else: # if a bad metric 
-			print(metricNames[i] + ': ' + bad) # print reason 
+		# else: # if a bad metric 
+			# print(metricNames[i] + ': ' + bad) # print reason 
 
 	if (len(relError) == 0): # all metrics bad 
 		print('WARNING: no good metrics found')
@@ -314,8 +314,8 @@ if __name__ == '__main__':
 	alpha = 1 
 	beta = 1 
 
-	# gciDir = 'gciData/'
-	gciDir = 'adaData/'
+	gciDir = 'gciData/'
+	# gciDir = 'adaData/'
 
 	dist = ['050', '150', '250', '350', '450'] 
 	# dist = ['050']
@@ -349,22 +349,25 @@ if __name__ == '__main__':
 
 		# plot Ux 
 		ax1 = fig1.add_subplot(np.ceil(len(dist)/2), 2, i+1) 
-		ax1.errorbar(y_ex, u, yerr=sigma)
-		ax1.errorbar(y_ex, u_ex, yerr=sigma_ex)
+		ax1.errorbar(y_ex, u, yerr=sigma, label='simulation')
+		ax1.errorbar(y_ex, u_ex, yerr=sigma_ex, label='experiment')
 		ax1.set_title('M = ' + str(M))
+		ax1.legend(loc='best')
 
 		# plot k 
 		ax2 = fig2.add_subplot(np.ceil(len(dist)/2), 2, i+1)
-		ax2.errorbar(y_ex, k, yerr=sigmak)
+		ax2.errorbar(y_ex, k, yerr=sigmak, label='simulation')
 		# ax2.plot(y_ex, k)
-		ax2.errorbar(y_ex, k_ex, yerr=ksigma_ex)
+		ax2.errorbar(y_ex, k_ex, yerr=ksigma_ex, label='experiment')
 		ax2.set_title('M = ' + str(Mk))
+		ax2.legend(loc='best')
 
 		# plot C 
 		ax3 = fig3.add_subplot(np.ceil(len(dist)/2), 2, i+1)
-		ax3.plot(yc, c)
-		plt.plot(yc, c_ex)
+		ax3.errorbar(yc, c, yerr=sigmac, label='simulation')
+		plt.errorbar(yc, c_ex, yerr=sigmac_ex, label='experiment')
 		ax3.set_title('M =' + str(Mc))
+		ax3.legend(loc='best')
 
 
 	plt.show()
