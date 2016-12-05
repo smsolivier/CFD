@@ -202,7 +202,7 @@ def readGCI(gciDir, subDir, N, grid, cgrid):
 		relError = np.array(relError) # switch to numpy 
 		ind = np.argmax(relError) # location of max error
 
-		error = 2*relError[ind] # maximum relative error 
+		error = 2*relError[ind] # maximum relative error, return 2 sigma 
 
 		print(subDir, useMetric[ind], useP[ind], error)
 
@@ -325,11 +325,10 @@ if __name__ == '__main__':
 	N = [] # store volume numbers 
 	for i in range(len(ndirs)):
 		if (ndirs[i][0].isdigit()):
-			N.append(float(ndirs[i]))
+			N.append(int(ndirs[i]))
 
 	N = np.array(sorted(N, reverse=True)) # sort N from high to low 
 	N = N[:3] # only keep largest three
-	print(N)
 
 	fig1 = plt.figure()
 	fig2 = plt.figure()
@@ -348,9 +347,11 @@ if __name__ == '__main__':
 			case = case, 
 			expDir = dist[i], 
 			gciDir = gciDir,
-			subDir = dist[i], 
+			subDir = dist[i],
+			N = N, 
 			alpha = alpha, 
-			beta = beta)
+			beta = beta
+			)
 
 		# plot Ux 
 		ax1 = fig1.add_subplot(np.ceil(len(dist)/2), 2, i+1) 
