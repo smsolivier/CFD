@@ -262,7 +262,7 @@ def globalMerit(y_ex, u_ex, sigma_ex, u, sigma, alpha, beta):
 
 	return M 
 
-def handle(case, expDir, gciDir, subDir, alpha, beta):
+def handle(case, expDir, gciDir, subDir, N, alpha, beta):
 	''' combines 
 			readExperiment 
 			readGCI 
@@ -277,8 +277,6 @@ def handle(case, expDir, gciDir, subDir, alpha, beta):
 		yc, c_ex, sigmac_ex, # concentration 
 		x # x location of y profiles 
 		) = readExperiment(case, expDir)
-
-	N = np.array([3200, 2800, 2400])
 
 	# get GCI data 
 	u, sigma, k, sigmak, c, sigmac = readGCI(gciDir, subDir, N, y_ex/1000, yc/1000) 
@@ -321,6 +319,17 @@ if __name__ == '__main__':
 	f = open(gciDir + 'case', 'r')
 	case = int(f.readline())
 	f.close()
+
+	# get number of volumes on each run 
+	ndirs = os.listdir(gciDir) # store directory names inside gciDir 
+	N = [] # store volume numbers 
+	for i in range(len(ndirs)):
+		if (ndirs[i][0].isdigit()):
+			N.append(float(ndirs[i]))
+
+	N = np.array(sorted(N, reverse=True)) # sort N from high to low 
+	N = N[:3] # only keep largest three
+	print(N)
 
 	fig1 = plt.figure()
 	fig2 = plt.figure()
