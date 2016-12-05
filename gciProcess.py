@@ -202,7 +202,7 @@ def readGCI(gciDir, subDir, N, grid, cgrid):
 		relError = np.array(relError) # switch to numpy 
 		ind = np.argmax(relError) # location of max error
 
-		error = relError[ind] # maximum relative error 
+		error = 2*relError[ind] # maximum relative error 
 
 		print(subDir, useMetric[ind], useP[ind], error)
 
@@ -345,21 +345,24 @@ if __name__ == '__main__':
 
 		# plot Ux 
 		ax1 = fig1.add_subplot(np.ceil(len(dist)/2), 2, i+1) 
-		ax1.errorbar(y_ex, u, yerr=sigma, color='g')
-		ax1.errorbar(y_ex, u_ex, yerr=sigma_ex)
+		ax1.errorbar(y_ex, u, yerr=sigma, label='simulation')
+		ax1.errorbar(y_ex, u_ex, yerr=sigma_ex, label='experiment')
 		ax1.set_title('M = ' + str(M))
+		ax1.legend(loc='best')
 
 		# plot k 
 		ax2 = fig2.add_subplot(np.ceil(len(dist)/2), 2, i+1)
-		ax2.errorbar(y_ex, k, yerr=sigmak, color='g')
-		ax2.errorbar(y_ex, k_ex, yerr=ksigma_ex)
+		ax2.errorbar(y_ex, k, yerr=sigmak, label='simulation')
+		ax2.errorbar(y_ex, k_ex, yerr=ksigma_ex, label='experiment')
 		ax2.set_title('M = ' + str(Mk))
+		ax2.legend(loc='best')
 
 		# plot C 
 		ax3 = fig3.add_subplot(np.ceil(len(dist)/2), 2, i+1)
-		ax3.errorbar(yc, c, yerr=sigmac, color='g')
-		plt.errorbar(yc, c_ex, yerr=sigmac_ex)
+		ax3.errorbar(yc, c, yerr=sigmac, label='simulation')
+		plt.errorbar(yc, c_ex, yerr=sigmac_ex, label='experiment')
 		ax3.set_title('M =' + str(Mc))
+		ax3.legend(loc='best')
 
 
 	plt.show()
