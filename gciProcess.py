@@ -149,7 +149,7 @@ def readGCI(gciDir, subDir, N, grid, cgrid):
 	C = np.zeros((3, len(cgrid))) # store C for each run on each grid point 
 
 	# store metrics of interest: centerline Ux, centerline k, integral k, integral Ux
-	metricNames = ['U', 'k', 'C', 'kint', 'Uint']
+	metricNames = ['U', 'k', 'kint', 'Uint']
 	metrics = np.zeros((len(metricNames), 3)) 
 	for i in range(3): # loop through number of runs 
 		curDir = gciDir + str(N[i]) + '/' + subDir + '/' # directory of the run 
@@ -170,11 +170,17 @@ def readGCI(gciDir, subDir, N, grid, cgrid):
 		C[i,:] = Cfunc(cgrid) # interpolate onto concentration grid 
 
 		# compute GCI metrics 
-		metrics[0,i] = Ufunc(0) # interpolated centerline Ux 
-		metrics[1,i] = kfunc(0) # interpolated centerline k 
-		metrics[2,i] = Cfunc(0) # interpolated centerline concentration 
-		metrics[3,i] = integrate.quad(kfunc, grid[0], grid[-1])[0] # integral of k 
-		metrics[4,i] = integrate.quad(Ufunc, grid[0], grid[-1])[0] # integral of U 
+		metNum = 0 # which metric to store into 
+		metrics[metNum,i] = Ufunc(0) # interpolated centerline Ux 
+		metNum += 1
+		metrics[metNum,i] = kfunc(0) # interpolated centerline k 
+		metNum += 1
+		# metrics[2,i] = Cfunc(0) # interpolated centerline concentration 
+		# metNum += 1
+		metrics[metNum,i] = integrate.quad(kfunc, grid[0], grid[-1])[0] # integral of k 
+		metNum += 1
+		metrics[metNum,i] = integrate.quad(Ufunc, grid[0], grid[-1])[0] # integral of U 
+		metNum += 1
 
 	# find order of convergence of all metrics, eliminate bad metrics, 
 	# find max error of good metrics, use relative error on all return metrics 
@@ -272,6 +278,20 @@ def globalMerit(y_ex, u_ex, sigma_ex, u, sigma, alpha, beta):
 
 	return M 
 
+def modelError(grid, val_ex, sigma_ex, val, sigma):
+	# interpolate to centerline 
+	val_ex_0 = interp1d(grid, val_ex, kind='cubic')(0)
+	sigma_ex_0 = interp1d(grid, sigma_ex, kind='cubic')(0)
+
+	val_0 = interp1d(grid, val, kind='cubic')(0) 
+	sigma_0 = interp1d(grid, sigma, kind='cubic')(0)
+
+	E = val_0 - val_ex_0
+
+	uval = np.sqrt(sigma_0**2 + sigma_ex_0**2) 
+
+	return E, uval
+
 def handle(case, expDir, gciDir, subDir, N, alpha, beta):
 	''' combines 
 			readExperiment 
@@ -300,8 +320,10 @@ def handle(case, expDir, gciDir, subDir, N, alpha, beta):
 	# compute M for C 
 	Mc = globalMerit(yc, c_ex, sigmac_ex, c, sigmac, alpha, beta)
 
+	E, uval = modelError(y_ex, u_ex, sigma_ex, u, sigma)
+
 	return (
-		y_ex, u_ex, sigma_ex, # experemintal Ux 
+		y_ex, u_ex, sigma_ex, # experimental Ux 
 		u, sigma, # simulated Ux 
 		k_ex, ksigma_ex, # experimental k 
 		k, sigmak, # simulated k 
@@ -309,7 +331,9 @@ def handle(case, expDir, gciDir, subDir, N, alpha, beta):
 		c, sigmac, # simulated concentration 
 		M, # metric array for Ux 
 		Mk, # metric array for k 
-		Mc # metric for concentration 
+		Mc, # metric for concentration 
+		E, # comparison error 
+		uval # validation uncertainty 
 		)  
 
 if __name__ == '__main__':
@@ -321,6 +345,9 @@ if __name__ == '__main__':
 	# gciDir = 'gciData/'
 	# gciDir = 'adaData/'
 	gciDir = 'ada2/'
+
+	if (len(sys.argv) == 2):
+		gciDir = sys.argv[1] + '/'
 
 	dist = ['050', '150', '250', '350', '450'] 
 	# dist = ['050']
@@ -341,10 +368,16 @@ if __name__ == '__main__':
 	N = np.array(sorted(N, reverse=True)) # sort N from high to low 
 	N = N[:3] # only keep largest three
 
+	print(N)
+
 	# store M values 
 	Mu = np.zeros(len(dist))
 	Mk = np.zeros(len(dist))
 	Mc = np.zeros(len(dist))
+
+	# store comparison error and uval at each location 
+	E = np.zeros(len(dist))
+	uval = np.zeros(len(dist))
 
 	fig1 = plt.figure()
 	fig2 = plt.figure()
@@ -358,7 +391,9 @@ if __name__ == '__main__':
 			c, sigmac, 
 			Mu[i], 
 			Mk[i],
-			Mc[i]
+			Mc[i],
+			E[i],
+			uval[i]
 			) = handle(
 			case = case, 
 			expDir = dist[i], 
@@ -390,9 +425,21 @@ if __name__ == '__main__':
 		ax3.set_title('M =' + str(Mc[i]))
 		ax3.legend(loc='best')
 
-	print('M Values:')
+	print('\nM Values:')
+	print('{:<6} {:<20} {:<20} {:<20}'.format('Dist', 'Mu', 'Mk', 'Mc'))
 	for i in range(len(dist)):
-		print('\t', dist[i], Mu[i], Mk[i], Mc[i])
+		print('{:<6} {:<20} {:<20} {:<20}'.format(dist[i], Mu[i], Mk[i], Mc[i]))
+
+	print('\nComparison Error')
+	print('{:6} {:20} {:20} {:20}'.format('Dist', 'E', 'uval', 'uval/E'))
+	for i in range(len(dist)):
+		print('{:<6.10} {:<20.10e} {:<20.10e} {:<20.10}'.format(
+			dist[i], 
+			E[i], 
+			uval[i], 
+			uval[i]/np.fabs(E[i])
+			)
+		)
 
 
-	plt.show()
+	# plt.show()

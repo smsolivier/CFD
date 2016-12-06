@@ -72,6 +72,12 @@ f = open(dataDir + '/case', 'w')
 f.write(str(case))
 f.close()
 
+# write number volumes to file 
+f = open(dataDir + '/nvols', 'w')
+for i in range(len(N)):
+	f.write('{} {} {} {}\n'.format(Nx1[i], Nx2[i], Ny[i], Nz[i]))
+f.close()
+
 # loop backwards so largest run is last (can run paraview on best run) 
 for i in range(len(N)-1, -1, -1): # loop through three runs 
 	currentDir = dataDir + '/' + str(N[i]) # current directory of run 
