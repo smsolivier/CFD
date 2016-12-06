@@ -9,7 +9,6 @@ import argparse
 from shutil import copyfile # copy files 
 
 import numpy as np 
-import matplotlib.pyplot as plt 
 
 import shutil
 
