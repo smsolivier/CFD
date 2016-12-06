@@ -64,9 +64,8 @@ d = np.array([.05, .15, .25, .35, .45]) # distances to interpolate
 
 # make directory gciData 
 dataDir = 'gciData'
-if (os.path.isdir(dataDir)):
-	shutil.rmtree(dataDir)
-os.makedirs(dataDir)
+if (not(os.path.isdir(dataDir))):
+	os.makedirs(dataDir)
 
 # write case to file 
 f = open(dataDir + '/case', 'w')
