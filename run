@@ -98,6 +98,8 @@ if not(''.join(args.interpolation) == 'nearest'
 
 xoutput = [.05, .15, .25, .35, .45] # list of interpolation distances 
 
+print('Running NUEN 489 GEMIX')
+
 # get number of processors in x, y, z 
 npx = int(args.np[0])
 npy = int(args.np[1])
