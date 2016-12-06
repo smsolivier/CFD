@@ -267,6 +267,8 @@ def runcmd(cmd):
 
 tt = Timer.timer() # start timer 
 
+yPlus = [] # store yplus values 
+
 if (not(args.cont)): # if not a continue run 
 	runcmd('foamListTimes -rm') # delete previous time steps 
 
@@ -298,8 +300,40 @@ if (not(args.setupOnly)): # run if not in setupOnly mode
 	runcmd('reconstructPar > /dev/null') # reconstruct parallel folders 
 
 	# get yPlus 
-	runcmd(application + ' -postProcess -func yPlus > /dev/null')
+	runcmd(application + ' -postProcess -func yPlus > yPlusLog')
 
+	# get yPlus values and print to screen 
+	f = open('yPlusLog', 'r')
+	yPlusMin = [] # store min yplus
+	yPlusMax = [] # store max yplus
+	yPlusAvg = [] # store average yplus  
+	time = [] # store time steps 
+	for line in f:
+		if (line.startswith('    patch walls y+ : ')):
+			for i in range(len(line)):
+				if line[i:i+len('min = ')] == 'min = ':
+					val = line[i+len('min = '):]
+					yPlusMin.append(val.split(',')[0])
+
+				elif line[i:i+len('max = ')] == 'max = ':
+					yPlusMax.append(line[i+len('max = '):].split(',')[0])
+
+				elif line[i:i+len('average = ')] == 'average = ':
+					yPlusAvg.append(line[i+len('average = '):].split(',')[0].strip())
+
+		elif (line.startswith('Time = ')):
+			time.append(line.split('=')[1].strip())
+	f.close()
+	print('\nyPlus')
+	# print terminal table of yPlus's 
+	print('{:<5} {:<10} {:<10} {:<10}'.format('Time', 'min', 'max', 'avg'))
+	for i in range(len(time)):
+		print('{:<5} {:<10} {:<10} {:<10}'.format(
+			time[i], 
+			yPlusMin[i], 
+			yPlusMax[i], 
+			yPlusAvg[i])
+		)
 
 	# --- process output into output/ --- 
 	# write Ux, k, concentration to output directory 

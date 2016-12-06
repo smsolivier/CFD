@@ -47,24 +47,26 @@ def calcOmega(u_sim, sigma_sim, u_ex, sigma_ex):
 	# print(integrate.quad(f_ex, -np.inf, np.inf)) 
 	# print(u_ex, sigma_ex)
 
+	# integrate omega(x) dx 
+	Omega = integrate.quad(omega, -np.inf, np.inf)
+
 	# plt.figure()
 	# plt.axvline(u_ex)
 	# plt.axvline(u_sim)
 	# plt.plot(x, f_ex(x), label='ex')
 	# plt.plot(x, f_sim(x), label='sim')
 	# plt.plot(x, omega(x), label='omega')
+	# plt.title(str(Omega))
 	# plt.legend(loc='best')
 	# plt.show()
 
 	# print(u_sim/u_ex, sigma_sim/sigma_ex)
 	# Omega, err = quadrature(omega, u_sim-1, u_sim+1)
 
-	# integrate omega(x) dx 
-	Omega = integrate.quad(omega, -np.inf, np.inf)
-
 	# print('Omega =', Omega[0], 'Error =', Omega[1])
 
 	return Omega[0] 
+	# return 0
 
 def calcGCI(f, N, tol=1e-9):
 	''' computes observed order of convergence and sigma from 
@@ -224,17 +226,14 @@ def globalMerit(y_ex, u_ex, sigma_ex, u, sigma, alpha, beta):
 		Omega[i] = calcOmega(u[i], sigma[i], u_ex[i], sigma_ex[i]) 
 
 	# create comparison grid 
-	# grid = np.linspace(y_ex[0], y_ex[-1], 100)
 	grid = y_ex 
 
 	# create experimental data 
 	# interpolate exact answer onto grid 
-	# ex = interp1d(y_ex, u_ex)(grid)
 	ex = u_ex 
 
 	# create simulation data 
 	# interpolate simulation onto grid 
-	# sim = interp1d(y_ex, u)(grid) 
 	sim = u 
 
 	# store derivatives 
@@ -252,7 +251,18 @@ def globalMerit(y_ex, u_ex, sigma_ex, u, sigma, alpha, beta):
 	# plt.plot(grid[1:], dsim)
 	# plt.show()
 
-	E = np.fabs(1 - dsim/dex) # error in derivatives 
+	# compute error in derivatives 
+	E = np.zeros(Ndata)
+	for i in range(Ndata): # loop through derivatives 
+		if (dsim[i] == 0 and dex[i] == 0):
+			ratio = 1 
+		elif (dex[i] == 0):
+			ratio = 1
+		else:
+			ratio = dsim[i]/dex[i]
+
+		E[i] = np.fabs(1 - ratio)
+
 
 	# compute M 
 	M = 0
@@ -308,8 +318,9 @@ if __name__ == '__main__':
 	alpha = 1 
 	beta = 1 
 
-	gciDir = 'gciData/'
+	# gciDir = 'gciData/'
 	# gciDir = 'adaData/'
+	gciDir = 'ada2/'
 
 	dist = ['050', '150', '250', '350', '450'] 
 	# dist = ['050']
@@ -330,6 +341,11 @@ if __name__ == '__main__':
 	N = np.array(sorted(N, reverse=True)) # sort N from high to low 
 	N = N[:3] # only keep largest three
 
+	# store M values 
+	Mu = np.zeros(len(dist))
+	Mk = np.zeros(len(dist))
+	Mc = np.zeros(len(dist))
+
 	fig1 = plt.figure()
 	fig2 = plt.figure()
 	fig3 = plt.figure()
@@ -340,9 +356,9 @@ if __name__ == '__main__':
 			k, sigmak, 
 			yc, c_ex, sigmac_ex, 
 			c, sigmac, 
-			M, 
-			Mk,
-			Mc
+			Mu[i], 
+			Mk[i],
+			Mc[i]
 			) = handle(
 			case = case, 
 			expDir = dist[i], 
@@ -357,22 +373,26 @@ if __name__ == '__main__':
 		ax1 = fig1.add_subplot(np.ceil(len(dist)/2), 2, i+1) 
 		ax1.errorbar(y_ex, u, yerr=sigma, label='simulation')
 		ax1.errorbar(y_ex, u_ex, yerr=sigma_ex, label='experiment')
-		ax1.set_title('M = ' + str(M))
+		ax1.set_title('M = ' + str(Mu[i]))
 		ax1.legend(loc='best')
 
 		# plot k 
 		ax2 = fig2.add_subplot(np.ceil(len(dist)/2), 2, i+1)
 		ax2.errorbar(y_ex, k, yerr=sigmak, label='simulation')
 		ax2.errorbar(y_ex, k_ex, yerr=ksigma_ex, label='experiment')
-		ax2.set_title('M = ' + str(Mk))
+		ax2.set_title('M = ' + str(Mk[i]))
 		ax2.legend(loc='best')
 
 		# plot C 
 		ax3 = fig3.add_subplot(np.ceil(len(dist)/2), 2, i+1)
 		ax3.errorbar(yc, c, yerr=sigmac, label='simulation')
 		plt.errorbar(yc, c_ex, yerr=sigmac_ex, label='experiment')
-		ax3.set_title('M =' + str(Mc))
+		ax3.set_title('M =' + str(Mc[i]))
 		ax3.legend(loc='best')
+
+	print('M Values:')
+	for i in range(len(dist)):
+		print('\t', dist[i], Mu[i], Mk[i], Mc[i])
 
 
 	plt.show()
