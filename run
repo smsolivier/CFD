@@ -334,6 +334,9 @@ if (not(args.setupOnly)): # run if not in setupOnly mode
 			yPlusMax[i], 
 			yPlusAvg[i])
 		)
+	# remove yPlusLog 
+	os.remove('yPlusLog')
+
 
 	# --- process output into output/ --- 
 	# write Ux, k, concentration to output directory 
