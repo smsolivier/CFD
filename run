@@ -80,6 +80,13 @@ parser.add_argument('-PLOT', action='store_true', help='Show plots of the inlet 
 parser.add_argument('-STATUS', action='store_true', help='Display the status of the run')
 ###########################################################
 
+# sensitivity variables 
+parser.add_argument('-Ufactor', type=float, default=1, help='scale inlet velocity profile')
+parser.add_argument('-kfactor', type=float, default=1, help='scale k inlet velocity profile')
+parser.add_argument('-D', type=float, default=1e-6, help='set mass diffusivity')
+parser.add_argument('-nuTop', type=float, default=1.004e-6, help='set viscosity of top fluid')
+parser.add_argument('-nuBottom', type=float, default=9.8313e-6, help='set viscosity of bottom fluid')
+
 # parse arguments 
 args = parser.parse_args()
 
@@ -286,7 +293,7 @@ if (not(args.cont)): # if not a continue run
 	runcmd('blockMesh > log') # generate mesh 
 
 	# generate inlet conditions, write to 0 folder 
-	generateInlet(inletVelocity, args.interpolation, args.PLOT, args.STATUS)
+	generateInlet(inletVelocity, args.Ufactor, args.kfactor, args.interpolation, args.PLOT, args.STATUS)
 
 if (not(args.setupOnly)): # run if not in setupOnly mode 
 
