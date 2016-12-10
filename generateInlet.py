@@ -92,7 +92,7 @@ def grabValues(file, str):
 
 
 
-def generateInlet(data, scheme, PLOT, STATUS):
+def generateInlet(data, ufactor=0.0, kfactor=0.0, scheme='linear', PLOT=False, STATUS=False):
 	data = ''.join(data)
 	scheme = ''.join(scheme)
 	
@@ -250,9 +250,9 @@ def generateInlet(data, scheme, PLOT, STATUS):
 	fmt = '%+.5e'
 	for i in range(nRows):
 		posdata[i,:] = np.array([matdata[i,1], matdata[i,2]])
-		kdata[i] = np.array([matdata[i,18]])
+		kdata[i] = kfactor*np.array([matdata[i,18]])
 		ukdata[i,:] = np.array([matdata[i,19], matdata[i,20]])
-		veldata[i,:] = np.array([matdata[i,3], matdata[i,5], matdata[i,7]])
+		veldata[i,:] = ufactor*np.array([matdata[i,3], matdata[i,5], matdata[i,7]])
 		uveldata[i,:] = np.array([matdata[i,4], matdata[i,6], matdata[i,8]])/2
 		if (STATUS == True):
 			if (i == 0):
