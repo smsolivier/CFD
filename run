@@ -12,9 +12,7 @@ import numpy as np
 
 import shutil
 
-####################### My Changes ########################
 from generateInlet import *
-###########################################################
 
 ''' Runs GEMIX project 
 	Changes 
@@ -30,9 +28,11 @@ from generateInlet import *
 # get command line values 	
 # description
 parser = argparse.ArgumentParser(description='run interFoam in parallel')
+
 # number of processors in x, y, z 
 parser.add_argument('-np', nargs=3, default=[4,1,1], metavar=('Nx','Ny','Nz'),
 	help='number of processors in x y z')
+
 # number of cells in x_inlet, x_mixing, y and z
 parser.add_argument('-N', 
 	nargs=4, 
@@ -40,8 +40,7 @@ parser.add_argument('-N',
 	metavar=('NxInlet', 'NxMixing', 'Ny', 'Nz'),
 	help='number of cells'
 	)
-# threeD option replaced by specify Nz > 1 
-# parser.add_argument('-threeD', action='store_true', default=False, help='run in 3D')
+
 # use k-Epsilon 
 parser.add_argument('-ke', action='store_true',	help='use k-Epsilon turbulence model')
 # use k-Omega 
@@ -61,11 +60,6 @@ parser.add_argument('-readFoam', action='store_true', help='run readFoam.py to p
 # specify which case to run 
 parser.add_argument('-case', type=int, default=0, help='0: N339, 1: N337, 2: N320')
 
-# specify diffusivity 
-parser.add_argument('-Dab', type=float, default=1e-6, help='diffusivity used in twoLiquidMixingFoam')
-# alphatab (1/Schmidt number)
-parser.add_argument('-alphatab', type=float, default=1, help='alpha tab used in twoLiquidMixingFoam')
-
 # use interFoam 
 parser.add_argument('-interFoam', action='store_true', help='use interFoam instead of twoLiquidMixingFoam')
 
@@ -80,12 +74,26 @@ parser.add_argument('-PLOT', action='store_true', help='Show plots of the inlet 
 parser.add_argument('-STATUS', action='store_true', help='Display the status of the run')
 ###########################################################
 
-# sensitivity variables 
+# --- sensitivity variables --- 
+# scale inlet velocities 
 parser.add_argument('-Ufactor', type=float, default=1, help='scale inlet velocity profile')
+
+# scale inlet k 
 parser.add_argument('-kfactor', type=float, default=1, help='scale k inlet velocity profile')
-parser.add_argument('-D', type=float, default=1e-6, help='set mass diffusivity')
-parser.add_argument('-nuTop', type=float, default=1.004e-6, help='set viscosity of top fluid')
-parser.add_argument('-nuBottom', type=float, default=9.8313e-6, help='set viscosity of bottom fluid')
+
+# set top fluid properties 
+parser.add_argument('-muTop', type=float, default=0, help='set viscosity of top fluid')
+parser.add_argument('-rhoTop', type=float, default=0, help='set top density')
+
+# set bottom fluid properties 
+parser.add_argument('-muBottom', type=float, default=0, help='set viscosity of bottom fluid')
+parser.add_argument('-rhoBottom', type=float, default=0, help='set bottom density')
+
+# specify diffusivity 
+parser.add_argument('-Dab', type=float, default=1e-6, help='diffusivity used in twoLiquidMixingFoam')
+
+# alphatab (1/Schmidt number)
+parser.add_argument('-alphatab', type=float, default=1, help='alpha tab used in twoLiquidMixingFoam')
 
 # parse arguments 
 args = parser.parse_args()
@@ -103,9 +111,9 @@ if not(''.join(args.interpolation) == 'nearest'
 	error('Invalid interpolation method - use either \'nearest\', \'linear\', or \'cubic\'')
 ###########################################################
 
-xoutput = [.05, .15, .25, .35, .45] # list of interpolation distances 
-
 print('Running NUEN 489 GEMIX')
+
+xoutput = [.05, .15, .25, .35, .45] # list of interpolation distances 
 
 # get number of processors in x, y, z 
 npx = int(args.np[0])
@@ -121,6 +129,7 @@ Ny = int(args.N[2])
 Nz = int(args.N[3])
 
 NVols = (Nx1 + Nx2) * 2*Ny * Nz 
+
 
 # --- change turbulence model --- 
 turbDir = 'kOmega/' # default model 
@@ -210,35 +219,121 @@ else: # use better geometry
 
 # --- case selection --- 
 inletVelocity = '' # store inlet velocity string for generateInlet  
-densityFile = '' # store transport properties file name 
 if (args.case == 0): # N339, .6 m/s, same density 
 	inletVelocity = '.6' 
-	densityFile = 'rho/same'
+
+	# set density 
+	rhoTop = 998 
+	rhoBottom = 998 
+
+	# set mu 
+	muTop = 1.002e-3 
+	muBottom = 1.002e-3 
 
 elif (args.case == 1): # N337, 1 m/s, same density  
 	inletVelocity = '1' 
-	densityFile = 'rho/same'
+
+	# set density 
+	rhoTop = 998
+	rhoBottom = 998 
+
+	# set mu 
+	muTop = 1.002e-3 
+	muBottom = 1.002e-3 
 
 elif (args.case == 2): # N320, .6 m/s, different density  
 	inletVelocity = '.6'
-	densityFile = 'rho/diff' 
+
+	# set density 
+	rhoTop = 998 
+	rhoBottom = 1008 
+
+	# set mu 
+	muTop = 1.002e-3 
+	muBottom = .991e-3 
+
+elif (args.case == 3): # N318, 1 m/s, different density, blind case 
+	inletVelocity = '1'
+
+	# set density 
+	rhoTop = 998 
+	rhoBottom = 1008 
+
+	# set mu 
+	muTop = 1.002e-3 
+	muBottom = .991e-3 
+
+else: # exit if other case given 
+	print('no case found')
+	sys.exit()
+
+# allow for setting rho, mu directly 
+if (args.rhoTop != 0): # if -rhoTop is changed from default 
+	rhoTop = args.rhoTop # set to specified value 
+
+if (args.rhoBottom != 0): # if -rhoBottom is set 
+	rhoBottom = args.rhoBottom # set to specified value 
+
+if (args.muTop != 0): # if -muTop set 
+	muTop = args.muTop # set to specified value 
+
+if (args.muBottom != 0): # if -muBottom set 
+	muBottom = args.muBottom # set to specified value 
+
+# calculate nu 
+nuTop = muTop/rhoTop  
+nuBottom = muBottom/rhoBottom  
 
 
-# --- copy density file to constant/transportProperties --- 
-copyfile(densityFile, 'constant/transportProperties')
-
-
-# --- set Dab in constant/transportProperties --- 
+# --- change transportProperties --- 
+def skipToEnd(string, file):
+	# advance file until string is found 
+	for line in file:
+		if (line.startswith(string)):
+			break 
 f = open('constant/transportProperties', 'r')
 string = '' # store transportProperties file 
 for line in f:
-	if (line.startswith('Dab')):
+	if (line.startswith('Dab')): # change mass diffusivity 
 		string += 'Dab           [0 2 -1 0 0 0 0]    ' + str(args.Dab) + '; \n'
-	elif (line.startswith('alphatab')):
+
+	elif (line.startswith('alphatab')): # change turbulent schmidt 
 		string += 'alphatab      [0 0 0 0 0 0 0]     ' + str(args.alphatab) + '; \n'
-	else:
+	
+	elif (line.startswith('upper')): # change upper properties 
+		string += 'upper\n'
+		string += next(f) # add next line 
+		string += next(f) # add transportModel line 
+		
+		# set nuTop 
+		string += '    nu              [0 2 -1 0 0 0 0] {};\n'.format(nuTop)
+
+		# set rhoTop 
+		string += '    rho             [1 -3 0 0 0 0 0] {};\n'.format(rhoTop)
+
+		string += '}\n'
+
+		skipToEnd('}', f) # advance f until } found 
+
+	elif (line.startswith('lower')): # change lower inlet properties 
+		string += 'lower\n'
+		string += next(f) # keep {
+		string += next(f) # keep transportModel 
+
+		# set nuBottom 
+		string += '    nu              [0 2 -1 0 0 0 0] {};\n'.format(nuBottom)
+
+		# set rhoBottom 
+		string += '    rho             [1 -3 0 0 0 0 0] {};\n'.format(rhoBottom)
+
+		string += '}\n'
+
+		skipToEnd('}', f) # advance f until } found 
+
+	else: # keep all other lines 
 		string += line 
 f.close()
+
 # write string to constant/transportProperties 
 f = open('constant/transportProperties', 'w')
 f.write(string) 
