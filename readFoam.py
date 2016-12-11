@@ -256,7 +256,8 @@ def readExperiment(case, dist):
 	# get maximum uncertainty 
 	ksigma = np.zeros(len(k))
 	for i in range(len(ksigma)):
-		ksigma[i] = max(kLow[i], kUp[i]) # use larger of 2, 2 sigma 
+		# ksigma[i] = max(kLow[i], kUp[i]) # use larger of 2, 2 sigma 
+		ksigma[i] = (kUp[i] - kLow[i])/2
 
 	# y, c, c95 
 	cf = np.loadtxt(pre+dist+field[1]+post, skiprows=3, usecols=(0,1,2))
@@ -277,11 +278,35 @@ def compare(grid_ex, val_ex, grid, val):
 	return norm 
 
 if __name__ == '__main__':
+	import matplotlib.pyplot as plt 
 
-	readInterp('output')
-	# import matplotlib.pyplot as plt 
+	import sys 
 
-	# import sys 
+	dr = 'output/'
+
+	subDirs = sorted(os.listdir(dr)) # get list of subdirectories in output
+
+	fig1 = plt.figure()
+	fig2 = plt.figure()
+	fig3 = plt.figure()
+	for i in range(len(subDirs)):
+		cd = dr + subDirs[i] # current directory 
+
+		uf = np.loadtxt(cd+'/U')
+		kf = np.loadtxt(cd+'/k')
+		cf = np.loadtxt(cd+'/C')
+
+		ax1 = fig1.add_subplot(np.ceil(len(subDirs)/2), 2, i+1)
+		ax1.plot(uf[:,0], uf[:,1])
+		
+		ax2 = fig2.add_subplot(np.ceil(len(subDirs)/2), 2, i+1)
+		ax2.plot(kf[:,0], kf[:,1])
+
+		ax3 = fig3.add_subplot(np.ceil(len(subDirs)/2), 2, i+1)
+		ax3.plot(cf[:,0], cf[:,1])
+	
+	plt.show()
+
 
 	# case = 0
 	# if (len(sys.argv) == 2):

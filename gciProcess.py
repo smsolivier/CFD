@@ -342,13 +342,12 @@ if __name__ == '__main__':
 	alpha = 1 
 	beta = 1 
 
-	# gciDir = 'gciData/'
-	# gciDir = 'adaData/'
-	gciDir = 'ada2/'
+	gciDir = 'gciData/'
 
 	if (len(sys.argv) == 2):
 		gciDir = sys.argv[1] + '/'
 
+	print('loading', gciDir)
 	dist = ['050', '150', '250', '350', '450'] 
 	# dist = ['050']
 	subDirs = sorted(os.listdir(gciDir)) # get list of subdirectories in gciDir 
@@ -370,76 +369,135 @@ if __name__ == '__main__':
 
 	print(N)
 
-	# store M values 
-	Mu = np.zeros(len(dist))
-	Mk = np.zeros(len(dist))
-	Mc = np.zeros(len(dist))
+	if (case == 3): # if blind case 
+		grid = np.linspace(-.025, .025, 50)
+		fig1 = plt.figure()
+		fig2 = plt.figure()
+		fig3 = plt.figure()
+		for i in range(len(dist)):
+			u, sigma, k, sigmak, c, sigmac = readGCI(gciDir, dist[i], N, grid, grid)
 
-	# store comparison error and uval at each location 
-	E = np.zeros(len(dist))
-	uval = np.zeros(len(dist))
+			# plot Ux 
+			ax1 = fig1.add_subplot(np.ceil(len(dist)/2), 2, i+1) 
+			ax1.errorbar(grid, u, yerr=sigma, label='simulation')
 
-	fig1 = plt.figure()
-	fig2 = plt.figure()
-	fig3 = plt.figure()
-	for i in range(len(dist)):
-		(y_ex, u_ex, sigma_ex, 
-			u, sigma, 
-			k_ex, ksigma_ex, 
-			k, sigmak, 
-			yc, c_ex, sigmac_ex, 
-			c, sigmac, 
-			Mu[i], 
-			Mk[i],
-			Mc[i],
-			E[i],
-			uval[i]
-			) = handle(
-			case = case, 
-			expDir = dist[i], 
-			gciDir = gciDir,
-			subDir = dist[i],
-			N = N, 
-			alpha = alpha, 
-			beta = beta
+			# plot k 
+			ax2 = fig2.add_subplot(np.ceil(len(dist)/2), 2, i+1)
+			ax2.errorbar(grid, k, yerr=sigmak, label='simulation')
+
+			# plot C 
+			ax3 = fig3.add_subplot(np.ceil(len(dist)/2), 2, i+1)
+			ax3.errorbar(grid, c, yerr=sigmac, label='simulation')
+
+		# write in requested format 
+		# interpolate concentration onto same grid 
+		f = open(gciDir+'NorrisOlivier'+dist[i]+'.dat', 'w')
+		f.write('Norris, Olivier\n')
+		# write header 
+		f.write(
+			'{:<5} '
+			'{:<9} '
+			'{:<12} {:<12} {:<12} '
+			'{:<12} {:<12} {:<12} '
+			'{:<12} {:<12} {:<12} \n'.format(
+				'x',
+				'y',
+				'U', 'U-DU', 'U+DU',
+				'K', 'K-DK', 'K+DK',
+				'C', 'C-DC', 'C+DC'
+				)
+			)
+		# write values 
+		for j in range(len(grid)):
+			f.write('{: <5g} ' # x position 
+				'{: < 8g} ' # y 
+				'{: < 12g} {: < 12g} {: < 12g} ' # velocity 
+				'{: < 12g} {: < 12g} {: < 12g} ' # k 
+				'{: < 12g} {: < 12g} {: < 12g} \n' # concentration 
+				.format(
+					float(dist[i])/1000, 
+					grid[j], 
+					u[j], u[j]-sigma[j], u[j]+sigma[j],
+					k[j], k[j] - sigmak[j], k[j] + sigmak[j],
+					c[j], c[j]-sigmac[j], c[j]+sigmac[j]
+					)
+				)
+		f.close()
+
+		plt.show()
+
+	else:
+
+		# store M values 
+		Mu = np.zeros(len(dist))
+		Mk = np.zeros(len(dist))
+		Mc = np.zeros(len(dist))
+
+		# store comparison error and uval at each location 
+		E = np.zeros(len(dist))
+		uval = np.zeros(len(dist))
+
+		fig1 = plt.figure()
+		fig2 = plt.figure()
+		fig3 = plt.figure()
+		for i in range(len(dist)):
+			(y_ex, u_ex, sigma_ex, 
+				u, sigma, 
+				k_ex, ksigma_ex, 
+				k, sigmak, 
+				yc, c_ex, sigmac_ex, 
+				c, sigmac, 
+				Mu[i], 
+				Mk[i],
+				Mc[i],
+				E[i],
+				uval[i]
+				) = handle(
+				case = case, 
+				expDir = dist[i], 
+				gciDir = gciDir,
+				subDir = dist[i],
+				N = N, 
+				alpha = alpha, 
+				beta = beta
+				)
+
+			# plot Ux 
+			ax1 = fig1.add_subplot(np.ceil(len(dist)/2), 2, i+1) 
+			ax1.errorbar(y_ex, u, yerr=sigma, label='simulation')
+			ax1.errorbar(y_ex, u_ex, yerr=sigma_ex, label='experiment')
+			ax1.set_title('M = ' + str(Mu[i]))
+			ax1.legend(loc='best')
+
+			# plot k 
+			ax2 = fig2.add_subplot(np.ceil(len(dist)/2), 2, i+1)
+			ax2.errorbar(y_ex, k, yerr=sigmak, label='simulation')
+			ax2.errorbar(y_ex, k_ex, yerr=ksigma_ex, label='experiment')
+			ax2.set_title('M = ' + str(Mk[i]))
+			ax2.legend(loc='best')
+
+			# plot C 
+			ax3 = fig3.add_subplot(np.ceil(len(dist)/2), 2, i+1)
+			ax3.errorbar(yc, c, yerr=sigmac, label='simulation')
+			plt.errorbar(yc, c_ex, yerr=sigmac_ex, label='experiment')
+			ax3.set_title('M =' + str(Mc[i]))
+			ax3.legend(loc='best')
+
+		print('\nM Values:')
+		print('{:<6} {:<20} {:<20} {:<20}'.format('Dist', 'Mu', 'Mk', 'Mc'))
+		for i in range(len(dist)):
+			print('{:<6} {:<20} {:<20} {:<20}'.format(dist[i], Mu[i], Mk[i], Mc[i]))
+
+		print('\nComparison Error')
+		print('{:6} {:20} {:20} {:20}'.format('Dist', 'E', 'uval', 'uval/E'))
+		for i in range(len(dist)):
+			print('{:<6.10} {:<20.10e} {:<20.10e} {:<20.10}'.format(
+				dist[i], 
+				E[i], 
+				uval[i], 
+				uval[i]/np.fabs(E[i])
+				)
 			)
 
-		# plot Ux 
-		ax1 = fig1.add_subplot(np.ceil(len(dist)/2), 2, i+1) 
-		ax1.errorbar(y_ex, u, yerr=sigma, label='simulation')
-		ax1.errorbar(y_ex, u_ex, yerr=sigma_ex, label='experiment')
-		ax1.set_title('M = ' + str(Mu[i]))
-		ax1.legend(loc='best')
 
-		# plot k 
-		ax2 = fig2.add_subplot(np.ceil(len(dist)/2), 2, i+1)
-		ax2.errorbar(y_ex, k, yerr=sigmak, label='simulation')
-		ax2.errorbar(y_ex, k_ex, yerr=ksigma_ex, label='experiment')
-		ax2.set_title('M = ' + str(Mk[i]))
-		ax2.legend(loc='best')
-
-		# plot C 
-		ax3 = fig3.add_subplot(np.ceil(len(dist)/2), 2, i+1)
-		ax3.errorbar(yc, c, yerr=sigmac, label='simulation')
-		plt.errorbar(yc, c_ex, yerr=sigmac_ex, label='experiment')
-		ax3.set_title('M =' + str(Mc[i]))
-		ax3.legend(loc='best')
-
-	print('\nM Values:')
-	print('{:<6} {:<20} {:<20} {:<20}'.format('Dist', 'Mu', 'Mk', 'Mc'))
-	for i in range(len(dist)):
-		print('{:<6} {:<20} {:<20} {:<20}'.format(dist[i], Mu[i], Mk[i], Mc[i]))
-
-	print('\nComparison Error')
-	print('{:6} {:20} {:20} {:20}'.format('Dist', 'E', 'uval', 'uval/E'))
-	for i in range(len(dist)):
-		print('{:<6.10} {:<20.10e} {:<20.10e} {:<20.10}'.format(
-			dist[i], 
-			E[i], 
-			uval[i], 
-			uval[i]/np.fabs(E[i])
-			)
-		)
-
-
-	# plt.show()
+		plt.show()

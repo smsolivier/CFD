@@ -17,8 +17,8 @@ from readFoam import readExperiment # gets experimental values
 
 # --- set up three runs --- 
 # number of volumes, most volumes to least 
-Nx1 = np.array([10, 10, 10])
-Nx2 = np.array([40, 30, 20])
+Nx1 = np.array([20, 20, 20])
+Nx2 = np.array([60, 40, 30])
 Ny = np.array([20, 20, 20])
 Nz = np.array([1, 1, 1])
 
@@ -32,7 +32,7 @@ N = (Nx1+Nx2)*2*Ny*Nz # number of volumes
 	2: N320, .6 m/s, different density 
 ''' 
 # select case, use command line input if provided 
-case = 0
+case = 2
 if (len(sys.argv) == 2):
 	case = sys.argv[1] 
 
@@ -41,31 +41,35 @@ npx = 4 # processors in x
 npy = 1 # processors in y 
 npz = 1 # processors in z 
 
+# set mass diffusivity 
+Dab = 1e-6
+
 tt = Timer.timer() # start timer 
 
-def handleOF(xinterp, grid):
-	''' read OpenFoam output with readFoam at xinterp 
-		interpolate onto the specified grid 
-	''' 
+# def handleOF(xinterp, grid):
+# 	''' read OpenFoam output with readFoam at xinterp 
+# 		interpolate onto the specified grid 
+# 	''' 
 
-	y, u, k, C = rf.parse(xinterp)
+# 	y, u, k, C = rf.parse(xinterp)
 
-	uinterp = np.interp(grid, y, u) 
+# 	uinterp = np.interp(grid, y, u) 
 
-	return uinterp 
+# 	return uinterp 
 
-def readOF(xinterp):
-	''' read openfoam data to extract Ux profile at xinterp ''' 
-	y, u, k, C = rf.parse(xinterp)
+# def readOF(xinterp):
+# 	''' read openfoam data to extract Ux profile at xinterp ''' 
+# 	y, u, k, C = rf.parse(xinterp)
 
-	return y, u, k, C 
+# 	return y, u, k, C 
 
 d = np.array([.05, .15, .25, .35, .45]) # distances to interpolate 
 
 # make directory gciData 
 dataDir = 'gciData'
-if (not(os.path.isdir(dataDir))):
-	os.makedirs(dataDir)
+if (os.path.isdir(dataDir)):
+	shutil.rmtree(dataDir)
+os.makedirs(dataDir)
 
 # write case to file 
 f = open(dataDir + '/case', 'w')
@@ -85,13 +89,15 @@ for i in range(len(N)-1, -1, -1): # loop through three runs
 		-quiet \
 		-case {} \
 		-np {} {} {} \
-		-outDir {}'.format(
+		-Dab {} \
+		-outDir {} >gciLog'.format(
 		int(Nx1[i]), # inlet x 
 		int(Nx2[i]), # mixing x 
 		int(Ny[i]), # y vols in each half 
 		int(Nz[i]), # total z vols 
 		case, # which case to run 
 		npx, npy, npz, # processor decomposition 
+		Dab, # mass diffusivity 
 		currentDir # output directory 
 		)
 
@@ -104,5 +110,7 @@ for i in range(len(N)-1, -1, -1): # loop through three runs
 	f = open(currentDir + 'nvols', 'w')
 	f.write('{} {} {} {}\n'.format(Nx1[i], Nx2[i], Ny[i], Nz[i]))
 	f.close()
+
+	print('completed run', i)
 
 tt.stop() # stop timer 

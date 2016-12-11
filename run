@@ -507,7 +507,6 @@ if (not(args.setupOnly)): # run if not in setupOnly mode
 		f.close()
 		g.close()
 
-
 print('Number of Volumes =', NVols)
 
 time, str = tt.stop() # end timer 
