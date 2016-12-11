@@ -92,7 +92,7 @@ def grabValues(file, str):
 
 
 
-def generateInlet(data, ufactor=0.0, kfactor=0.0, scheme='linear', PLOT=False, STATUS=False):
+def generateInlet(data, ufactor=1.0, kfactor=1.0, scheme='linear', PLOT=False, STATUS=False):
 	data = ''.join(data)
 	scheme = ''.join(scheme)
 	
