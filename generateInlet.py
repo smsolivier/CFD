@@ -368,11 +368,6 @@ def generateInlet(data, ufactor=1.0, kfactor=1.0, scheme='linear', PLOT=False, S
 		matpos, method=scheme)
 	# print("Done!")
 
-	### Remove any 0's in newK
-	for i, val in enumerate(newK):
-		if (val == 0):
-			newK[i] = 1e-10
-
 	# print("Gathering current k inlet conditions from '{}'... ".format(projectPATH+'/0/'+'k'), end='')
 	lines = readin(projectPATH+'/0/'+'k')
 	topFound = False
@@ -401,7 +396,10 @@ def generateInlet(data, ufactor=1.0, kfactor=1.0, scheme='linear', PLOT=False, S
 	f.write('{}\n'.format(nTopCells))
 	f.write('(\n')
 	for i in range(nTopCells):
-		f.write('{}\n'.format(fmt%(newK[i])))
+		if (newK[i] == 0):
+			f.write('{}\n'.format(fmt%(1e-10)))
+		else:
+			f.write('{}\n'.format(fmt%(newK[i])))
 	f.write(')\n')
 	f.write(';\n')
 	for i in np.arange(topEndPos,botStartPos+1):
@@ -411,7 +409,10 @@ def generateInlet(data, ufactor=1.0, kfactor=1.0, scheme='linear', PLOT=False, S
 	f.write('{}\n'.format(nTopCells))
 	f.write('(\n')
 	for i in range(nTopCells,nCells):
-		f.write('{}\n'.format(fmt%(newK[i])))
+		if (newK[i] == 0):
+			f.write('{}\n'.format(fmt%(1e-10)))
+		else:
+			f.write('{}\n'.format(fmt%(newK[i])))
 	f.write(')\n')
 	f.write(';\n')
 	for i in np.arange(botEndPos,len(lines)):
