@@ -136,6 +136,8 @@ npz = 1
 
 # case to run 
 case = 0 
+if len(sys.argv) == 2:
+	case = int(sys.argv[1])
 
 # set case dependent values 
 inletVelocity = '' # store inlet velocity string for generateInlet  
@@ -207,6 +209,7 @@ runstr = './run \
 	-N {} {} {} {} \
 	-np {} {} {} \
 	-case {} \
+	-quiet \
 	>senslog'.format(
 		Nx1, Nx2, Ny, Nz, # number of volumes 
 		npx, npy, npz, # parallel decomposition 
@@ -230,6 +233,7 @@ for i in range(nruns):
 		-np {} {} {} \
 		-case {} \
 		-Ufactor {} \
+		-quiet \
 		>senslog'.format(
 			Nx1, Nx2, Ny, Nz, # number of volumes 
 			npx, npy, npz, # parallel decomposition 
@@ -259,6 +263,7 @@ for i in range(nruns):
 		-np {} {} {} \
 		-case {} \
 		-kfactor {} \
+		-quiet \
 		>senslog'.format(
 			Nx1, Nx2, Ny, Nz, # number of volumes 
 			npx, npy, npz, # parallel decomposition 
@@ -297,6 +302,7 @@ def run(dr, Nx1, Nx2, Ny, Nz, npx, npy, npz, case, props):
 		-muBottom {} \
 		-rhoBottom {} \
 		-Dab {} \
+		-quiet \
 		>senslog'.format(
 			Nx1, Nx2, Ny, Nz, # number of volumes 
 			npx, npy, npz, # parallel decomposition 
