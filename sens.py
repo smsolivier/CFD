@@ -120,6 +120,7 @@ def get(dr):
 
 	return kint 
 
+
 readDir = 'output/350' # place to read k values from 
 
 # number of volumes 
@@ -130,7 +131,7 @@ Nz = 1
 
 # parallel decomposition
 npx = 4 
-npy = 1 
+npy = 1
 npz = 1
 
 # case to run 
@@ -221,62 +222,62 @@ k_0 = get(readDir)
 vmax, uv, kmax, uk = maxVals(inletVelocity)
 
 print("Working on velocity")
-# coef = np.zeros(nruns)
-# for i in range(nruns):
-# 	# run openfoam 
-# 	runstr = './run \
-# 		-N {} {} {} {} \
-# 		-np {} {} {} \
-# 		-case {} \
-# 		-Ufactor {} \
-# 		>senslog'.format(
-# 			Nx1, Nx2, Ny, Nz, # number of volumes 
-# 			npx, npy, npz, # parallel decomposition 
-# 			case, # case to run 
-# 			scale[i] # scale velocity 
-# 			)
+coef = np.zeros(nruns)
+for i in range(nruns):
+	# run openfoam 
+	runstr = './run \
+		-N {} {} {} {} \
+		-np {} {} {} \
+		-case {} \
+		-Ufactor {} \
+		>senslog'.format(
+			Nx1, Nx2, Ny, Nz, # number of volumes 
+			npx, npy, npz, # parallel decomposition 
+			case, # case to run 
+			scale[i] # scale velocity 
+			)
 
-# 	x = os.system(runstr)
-# 	if (x != 0): # exit if problems 
-# 		print(runstr)
-# 		sys.exit()
+	x = os.system(runstr)
+	if (x != 0): # exit if problems 
+		print(runstr)
+		sys.exit()
 
-# 	k = get(readDir)
-# 	coef[i] = (k - k_0)/(vmax*(scale[i]-1))
-# 	print(coef[i])
+	k = get(readDir)
+	coef[i] = (k - k_0)/(vmax*(scale[i]-1))
+	print(coef[i])
 
-# if (np.std(coef) > 0.5*np.mean(coef)):
-# 	print("Error: large standard deviation for sensitivity analysis")
-# coefvals[0] = np.mean(coef)
+if (np.std(coef) > 0.5*np.mean(coef)):
+	print("Error: large standard deviation for sensitivity analysis")
+coefvals[0] = np.mean(coef)
 
 print("Working on k")
-# coef = np.zeros(nruns)
-# for i in range(nruns):
-# 	# run openfoam 
-# 	runstr = './run \
-# 		-N {} {} {} {} \
-# 		-np {} {} {} \
-# 		-case {} \
-# 		-kfactor {} \
-# 		>senslog'.format(
-# 			Nx1, Nx2, Ny, Nz, # number of volumes 
-# 			npx, npy, npz, # parallel decomposition 
-# 			case, # case to run 
-# 			scale[i] # scale velocity 
-# 			)
+coef = np.zeros(nruns)
+for i in range(nruns):
+	# run openfoam 
+	runstr = './run \
+		-N {} {} {} {} \
+		-np {} {} {} \
+		-case {} \
+		-kfactor {} \
+		>senslog'.format(
+			Nx1, Nx2, Ny, Nz, # number of volumes 
+			npx, npy, npz, # parallel decomposition 
+			case, # case to run 
+			scale[i] # scale velocity 
+			)
 
-# 	x = os.system(runstr)
-# 	if (x != 0): # exit if problems 
-# 		print(runstr)
-# 		sys.exit()
+	x = os.system(runstr)
+	if (x != 0): # exit if problems 
+		print(runstr)
+		sys.exit()
 
-# 	k = get(readDir)
-# 	coef[i] = (k - k_0)/(kmax*(scale[i]-1))
-# 	print(coef[i])
+	k = get(readDir)
+	coef[i] = (k - k_0)/(kmax*(scale[i]-1))
+	print(coef[i])
 
-# if (np.std(coef)/np.mean(coef) > 0.1):
-# 	print("Error: large standard deviation for sensitivity analysis")
-# coefvals[1] = np.mean(coef)
+if (np.std(coef)/np.mean(coef) > 0.1):
+	print("Error: large standard deviation for sensitivity analysis")
+coefvals[1] = np.mean(coef)
 
 coef = np.zeros(nruns)
 
@@ -318,7 +319,7 @@ def run(dr, Nx1, Nx2, Ny, Nz, npx, npy, npz, case, props):
 propName = np.array(['muTop', 'rhoTop', 'muBottom', 'rhoBottom', 'Dab'])
 props = np.array([muTop, rhoTop, muBottom, rhoBottom, Dab])
 for i in range(len(props)): # loop through properties
-	print("Working on {}".format(props[i]))
+	print("Working on {}".format(propName[i]))
 	for j in range(nruns): # loop through perturbations 
 		newprop = np.copy(props)
 		newprop[i] += scale[j]*props[i] # perturb each variable 
@@ -331,3 +332,27 @@ for i in range(len(props)): # loop through properties
 	coefvals[i+2] = np.mean(coef)
 
 print(coefvals)
+
+if (case == 0):
+	file = 'N339'
+elif (case == 1):
+	file = 'N337'
+elif (case == 2):
+	file = 'N320'
+else:
+	file = 'N318'
+
+inputs = np.array(['Ux', 'k', 'mu_top', 'mu_bottom', 'rho_top', 'rho_bottom', 'Dab'])
+# uncertainty[-1] is the standard deviation of Dab, assumed to be 5e-7 with a value
+# of 1e-6 (round off error)
+uncertainty = np.array([uv, uk, 0.0005, 0.0005, 0.5, 0.5, 5e-7])
+inputu = 0
+fmt='%.4e'
+
+f = open('InputUncertainty/{}.csv'.format(file), 'w')
+f.write('Input,Coefficient,Uncertainty\n')
+for i, j, k in zip(inputs, coefvals, uncertainty):
+	f.write('{},{},{}\n'.format(i,fmt%j,fmt%k))
+	inputu += (j*k)**2
+f.write('Overall Uncertainty,{}\n'.format(np.sqrt(inputu)))
+f.close()
