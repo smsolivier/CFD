@@ -369,10 +369,9 @@ def generateInlet(data, ufactor=1.0, kfactor=1.0, scheme='linear', PLOT=False, S
 	# print("Done!")
 
 	### Remove any 0's in newK
-	for i, row in enumerate(newK):
-		for j, val in enumerate(row):
-			if (val == 0):
-				newK[i,j] = 1e-10
+	for i, val in enumerate(newK):
+		if (val == 0):
+			newK[i] = 1e-10
 
 	# print("Gathering current k inlet conditions from '{}'... ".format(projectPATH+'/0/'+'k'), end='')
 	lines = readin(projectPATH+'/0/'+'k')
