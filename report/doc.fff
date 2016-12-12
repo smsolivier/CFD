@@ -1,0 +1,35 @@
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{three_050.pdf}
+\caption{The velocity, turbulent kinetic energy and concentration profiles at \SI{50}{mm} downstream. }
+\end{figure}
+\efloatseparator
+ 
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{three_150.pdf}
+\caption{The velocity, turbulent kinetic energy and concentration profiles at \SI{150}{mm} downstream. }
+\end{figure}
+\efloatseparator
+ 
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{three_250.pdf}
+\caption{The velocity, turbulent kinetic energy and concentration profiles at \SI{250}{mm} downstream. }
+\end{figure}
+\efloatseparator
+ 
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{three_350.pdf}
+\caption{The velocity, turbulent kinetic energy and concentration profiles at \SI{350}{mm} downstream. }
+\end{figure}
+\efloatseparator
+ 
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{three_450.pdf}
+\caption{The velocity, turbulent kinetic energy and concentration profiles at \SI{450}{mm} downstream. }
+\end{figure}
+\efloatseparator
+ 

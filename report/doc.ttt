@@ -1,0 +1,19 @@
+\begin{table}
+\centering
+\captionsetup{width=11.7cm}
+\caption{The metric used and resulting observed convergence and relative uncertainty at each of the five downstream locations. }
+\label{tab:gciConvergence}
+\begin{tabular}{*{4}{>{\centering\arraybackslash}m{2.5cm}}}
+\toprule
+Distance (mm) & Metric Used & Observed Convergence & Relative Uncertainty \\
+\midrule
+\input{p_050}
+\input{p_150}
+\input{p_250}
+\input{p_350}
+\input{p_450}
+\bottomrule
+\end{tabular}
+\end{table}
+\efloatseparator
+ 
