@@ -102,10 +102,40 @@
 }
 \newcommand{\avg}[1]{\langle #1 \rangle}
 
+\usepackage[super,sort,numbers]{natbib}
+
 \begin{document} % --------------------------------------------------
 
 \section{Numerical Approach}
 \subsection{Solver}
+	The OpenFOAM solver twoLiquidMixingFoam, a PIMPLE, volume of fluid solver, was chosen to model the turbulent mixing of the two fluids entering the mixing channel. This solver was capable of explicitly modeling two miscible fluids through specification of two phases in the transportProperties file. The solver computed the phase fraction of the fluid entering through the top inlet. The phase fraction was given a fixed inlet value of one at the top inlet and zero at the bottom inlet. At the walls and the outlet, the phase fraction had a zero gradient boundary condition. 
+
+	Pressure had zero gradient boundary conditions at the walls and inlets and a fixed value of zero at the outlet. 
+
+	The $k$--$\omega$ turbulence model, kOmegaSST, was used for its wide range of acceptable $y^+$ values. The turbulent kinetic energy, $k$, was given in the inlet conditions provided by PSI. 
+	% explain inlet velocity, k
+
+	The inlet conditions for $\omega$ were fixed values according to 
+		\begin{equation}
+			\omega = \frac{\sqrt{k}}{\ell}
+		\end{equation}
+	where 
+		\begin{equation}
+			\ell = .07 D
+		\end{equation}
+	was used to approximate the turbulent length scale, $\ell$ \cite{freeStreamEqs}. Wall functions were used at the walls and a zero gradient was applied at the outlet.  
+
+	The Gauss linear divergence scheme was used for velocity and phase fraction and the Gauss upwind scheme was used for $k$ and $\omega$. 
+
+	The phase fraction tolerances were set to \num{1e-9} while pressure, velocity, $k$, and $\omega$ had tolerances of \num{1e-7}. 
+
+	All simulations had an end time of two seconds. The adjustable time step feature in OpenFOAM was used to set an appropriate time step. 
+
+	At time zero, the mixing channel was set to have stagnant water with a phase fraction of 0.5. 
+
+	A Python script was created to build the blockMeshDict, transportProperties, turbulenceProperties and decomposeParDict files. The script runs all the necessary utilities to run the simulation including generating the geometry, corresponding inlet conditions and parallel decomposition and reconstruction. 
+
+	It also handles all post processing such as generating $y^+$ and interpolating the velocity, $k$, and concentration profiles at the five downstream locations using the OpenFOAM utility singleGraph. The script has inputs for number of volumes, number of processors, turbulence model, case (N320, N337, N339, N318), and properties such as mass diffusivity, density, and viscosity. 
 
 \section{Uncertainty Analysis}
 \subsection{Numerical Uncertainty}
@@ -191,5 +221,9 @@
 		\end{figure}
 
 \end{appendices}
+
+	\bibliographystyle{unsrtnat}
+    \clearpage
+	\bibliography{references}
 
 \end{document} % --------------------------------------------------
