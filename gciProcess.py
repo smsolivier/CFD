@@ -13,6 +13,10 @@ from scipy.stats import norm
 
 from readFoam import readExperiment # read in experimental values from data/ 
 
+import texTools as tex # latex helper functions 
+
+from hidespines import *
+
 def gaussian(mu, sigma):
 	''' return gaussian with average mu and variance sigma^2 ''' 
 	
@@ -93,8 +97,8 @@ def calcGCI(f, N, tol=1e-9):
 		BAD += 'unknown '
 
 	# calculate refinement factor 
-	r12 = (N[0]/N[1])**(1/3)
-	r23 = (N[1]/N[2])**(1/3) 
+	r12 = (N[0]/N[1])**(1/2)
+	r23 = (N[1]/N[2])**(1/2) 
 
 	converged = 0 # store if converged, break if 1 
 	pold = 2 # guess 2 
@@ -213,6 +217,16 @@ def readGCI(gciDir, subDir, N, grid, cgrid):
 		error = 2*relError[ind] # maximum relative error, return 2 sigma 
 
 		print(subDir, useMetric[ind], useP[ind], error)
+
+		# make latex table 
+		table = tex.table()
+		table.addLine(
+			subDir, # x location 
+			useMetric[ind], # which metric is used 
+			tex.utils.writeNumber(useP[ind]), # resulting convergence 
+			tex.utils.writeNumber(error) # relative error 
+			)
+		table.save('report/p_'+subDir+'.tex')
 
 	return ( # parenthesis make able to return on multiple lines 
 		U[0,:], U[0,:]*error*np.ones(len(grid)), # return Ux and error 
@@ -370,7 +384,7 @@ if __name__ == '__main__':
 	print(N)
 
 	if (case == 3): # if blind case 
-		grid = np.linspace(-.025, .025, 50)
+		grid = np.linspace(-.025, .025, 30)
 		fig1 = plt.figure()
 		fig2 = plt.figure()
 		fig3 = plt.figure()
@@ -378,16 +392,21 @@ if __name__ == '__main__':
 			u, sigma, k, sigmak, c, sigmac = readGCI(gciDir, dist[i], N, grid, grid)
 
 			# plot Ux 
-			ax1 = fig1.add_subplot(np.ceil(len(dist)/2), 2, i+1) 
+			ax1 = fig1.add_subplot(len(dist), 1, i+1) 
 			ax1.errorbar(grid, u, yerr=sigma, label='simulation')
+			plt.xlabel('y (m)')
+			plt.ylabel('./g')
+			hidespines(ax1)
 
 			# plot k 
-			ax2 = fig2.add_subplot(np.ceil(len(dist)/2), 2, i+1)
+			ax2 = fig2.add_subplot(len(dist), 1, i+1)
 			ax2.errorbar(grid, k, yerr=sigmak, label='simulation')
+			hidespines(ax2)
 
 			# plot C 
-			ax3 = fig3.add_subplot(np.ceil(len(dist)/2), 2, i+1)
+			ax3 = fig3.add_subplot(len(dist), 1, i+1)
 			ax3.errorbar(grid, c, yerr=sigmac, label='simulation')
+			hidespines(ax3)
 
 		# write in requested format 
 		# interpolate concentration onto same grid 
@@ -424,6 +443,9 @@ if __name__ == '__main__':
 				)
 		f.close()
 
+		fig1.savefig('report/blindU.pdf')
+		fig2.savefig('report/blindk.pdf')
+		fig3.savefig('report/blindC.pdf')
 		plt.show()
 
 	else:
@@ -437,9 +459,9 @@ if __name__ == '__main__':
 		E = np.zeros(len(dist))
 		uval = np.zeros(len(dist))
 
-		fig1 = plt.figure()
-		fig2 = plt.figure()
-		fig3 = plt.figure()
+		# fig1 = plt.figure()
+		# fig2 = plt.figure()
+		# fig3 = plt.figure()
 		for i in range(len(dist)):
 			(y_ex, u_ex, sigma_ex, 
 				u, sigma, 
@@ -462,34 +484,76 @@ if __name__ == '__main__':
 				beta = beta
 				)
 
-			# plot Ux 
-			ax1 = fig1.add_subplot(np.ceil(len(dist)/2), 2, i+1) 
-			ax1.errorbar(y_ex, u, yerr=sigma, label='simulation')
-			ax1.errorbar(y_ex, u_ex, yerr=sigma_ex, label='experiment')
-			ax1.set_title('M = ' + str(Mu[i]))
-			ax1.legend(loc='best')
+			# # plot Ux 
+			# ax1 = fig1.add_subplot(np.ceil(len(dist)/2), 2, i+1) 
+			# ax1.errorbar(y_ex, u, yerr=sigma, label='simulation')
+			# ax1.errorbar(y_ex, u_ex, yerr=sigma_ex, label='experiment')
+			# ax1.set_title(dist[i])
+			# ax1.legend(loc='best', frameon=False)
+			# hidespines(ax1)
 
-			# plot k 
-			ax2 = fig2.add_subplot(np.ceil(len(dist)/2), 2, i+1)
-			ax2.errorbar(y_ex, k, yerr=sigmak, label='simulation')
-			ax2.errorbar(y_ex, k_ex, yerr=ksigma_ex, label='experiment')
-			ax2.set_title('M = ' + str(Mk[i]))
-			ax2.legend(loc='best')
+			# # plot k 
+			# ax2 = fig2.add_subplot(np.ceil(len(dist)/2), 2, i+1)
+			# ax2.errorbar(y_ex, k, yerr=sigmak, label='simulation')
+			# ax2.errorbar(y_ex, k_ex, yerr=ksigma_ex, label='experiment')
+			# ax2.set_title(dist[i])
+			# ax2.legend(loc='best', frameon=False)
+			# hidespines(ax2)
 
-			# plot C 
-			ax3 = fig3.add_subplot(np.ceil(len(dist)/2), 2, i+1)
-			ax3.errorbar(yc, c, yerr=sigmac, label='simulation')
+			# # plot C 
+			# ax3 = fig3.add_subplot(np.ceil(len(dist)/2), 2, i+1)
+			# ax3.errorbar(yc, c, yerr=sigmac, label='simulation')
+			# ax3.errorbar(yc, c_ex, yerr=sigmac_ex, label='experiment')
+			# # ax3.set_title('M =' + str(Mc[i]))
+			# ax3.set_title(dist[i])
+			# ax3.legend(loc='best', frameon=False)
+			# hidespines(ax3)
+
+			plt.figure()
+			plt.subplot(3,1,1)
+			plt.errorbar(y_ex, u, yerr=sigma, label='simulation')
+			plt.errorbar(y_ex, u_ex, yerr=sigma_ex, label='experiment')
+			plt.xlabel('y (mm)')
+			plt.ylabel('U')
+			hidespines(plt.gca())
+
+			plt.subplot(3,1,2)
+			plt.errorbar(y_ex, k, yerr=sigmak, label='simulation')
+			plt.errorbar(y_ex, k_ex, yerr=ksigma_ex, label='experiment')
+			plt.xlabel('y (mm)')
+			plt.ylabel('k')
+			hidespines(plt.gca())
+
+			plt.subplot(3,1,3)
+			plt.errorbar(yc, c, yerr=sigmac, label='simulation')
 			plt.errorbar(yc, c_ex, yerr=sigmac_ex, label='experiment')
-			ax3.set_title('M =' + str(Mc[i]))
-			ax3.legend(loc='best')
+			plt.xlabel('y (mm)')
+			plt.ylabel('C')
+			plt.xlim(yc[-1], yc[0])
+			hidespines(plt.gca())
+
+			plt.savefig('report/three_'+dist[i]+'.pdf')
+
+		# fig1.savefig('report/U.pdf')
+		# fig2.savefig('report/k.pdf')
+		# fig3.savefig('report/C.pdf')
 
 		print('\nM Values:')
 		print('{:<6} {:<20} {:<20} {:<20}'.format('Dist', 'Mu', 'Mk', 'Mc'))
+		table = tex.table()
 		for i in range(len(dist)):
 			print('{:<6} {:<20} {:<20} {:<20}'.format(dist[i], Mu[i], Mk[i], Mc[i]))
+			table.addLine(
+				dist[i], # name of line
+				tex.utils.writeNumber(Mu[i]), # Mu 
+				tex.utils.writeNumber(Mk[i]), # Mk 
+				tex.utils.writeNumber(Mc[i]) # Mc 
+				)
+		table.save('report/M.tex')
 
 		print('\nComparison Error')
 		print('{:6} {:20} {:20} {:20}'.format('Dist', 'E', 'uval', 'uval/E'))
+		table = tex.table()
 		for i in range(len(dist)):
 			print('{:<6.10} {:<20.10e} {:<20.10e} {:<20.10}'.format(
 				dist[i], 
@@ -498,6 +562,13 @@ if __name__ == '__main__':
 				uval[i]/np.fabs(E[i])
 				)
 			)
+			table.addLine(
+				dist[i], # name of line 
+				tex.utils.writeNumber(E[i]), # comparison error 
+				tex.utils.writeNumber(uval[i]), # uncertainty 
+				tex.utils.writeNumber(uval[i]/np.fabs(E[i])) # ratio 
+				)
+		table.save('report/CE.tex')
 
 
 		plt.show()
