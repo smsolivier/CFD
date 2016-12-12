@@ -1,0 +1,9 @@
+Input,Coefficient,Uncertainty
+Ux,9.8493e-05,4.0277e-04
+k,2.1062e-02,1.6643e-03
+mu_top,-4.3755e-03,5.0000e-04
+mu_bottom,1.9243e-09,5.0000e-04
+rho_top,-4.3747e-03,5.0000e-01
+rho_bottom,4.5180e-09,5.0000e-01
+Dab,0.0000e+00,5.0000e-07
+Overall Uncertainty,0.0021876421227490853
