@@ -9,27 +9,107 @@ import numpy as np
 from scipy.interpolate import interp1d
 import scipy.integrate as integrate 
 
+### 
+
+# Read in the data in a useable format
+def readin(filename, skip=0):
+	"""Reads in the output file"""
+	f = open(filename, 'r')
+	with open(filename) as f:
+	    lines = f.readlines()
+	f.close()
+	return lines[skip:]
+
+
+def maxVals(data, LOUD=False):
+	"""Determines max velocity and TKE with uncertainty of given inlet conditions.
+	Return:
+		[max velocity], [velocity uncertainty], [max TKE], [TKE uncertainty]
+	"""
+	data = ''.join(data)
+	
+	conversion = 1000
+
+	# Reinitializes the data file name
+	if (data == '0.6' or data == '.6'):
+		data = 'Vel_Inlet_X-50_u06ms.dat'
+	elif (data == '1.0' or data == '1'):
+		data = 'Vel_Inlet_X-50_u10ms.dat'
+	else:
+		error('Invalid inlet conditions, either \'0.6\' or \'1.0\'.')
+
+	# Determine the directories
+	projectPATH = os.path.dirname(os.path.realpath(__file__))
+
+	#####################################################################
+	# Load in the data for interpolation
+	#####################################################################
+	# print("Reading inlet data from '{}'... ".format(projectPATH+'/data/'+data), end='\n')
+	lines = readin(projectPATH+'/data/'+data, skip=5)
+	cols = np.array(["x", "y", "z", "Vx", "U_x95", "Vy", "U_y95", "Vz", "U_z95",
+		"RMSVx", "RMSVxUpper", "RMSVxLower", "RMSVy", "RMSVyUpper", "RMSVyLower",
+		"RMSVz", "RMSVzUpper", "RMSVzLower", "k", "kLOWER", "kUPPER"])
+	# Remove the black lines at the end of the file
+	for i in range(len(lines))[::-1]:
+		if (lines[i].strip() == ''):
+			del lines[-1]
+		else:
+			break
+	nRows = len(lines)
+	nCols = len(cols)
+
+	# Create a matrix of all the values from the file
+	matdata = np.zeros([nRows, nCols])
+	for i in range(len(lines)):
+		matdata[i,:] = np.fromstring(lines[i], sep='\t')
+		# print(i, matdata[i,:]) # Data verification purposes
+
+	# for i in matdata:
+	# 	print(i)
+
+	# print(matdata[30])
+
+	##########
+	# 'kdata' contians the corresponding turbulent kinetic energy data
+	# 'ukdata' holds the lower (FIRST COLUMN) and upper (SECOND COLUMN) bounds of k
+	# 'veldata' contains the corresponding velocity component values
+	# 'uveldata' holds the standard deviation of velocity in the x, y, and z
+	##########
+	veldata = np.zeros([nRows, 3])
+	uveldata = np.zeros([nRows, 3])
+	kdata = np.zeros(nRows)
+	ukdata = np.zeros([nRows, 2])
+	for i in range(nRows):
+		kdata[i] = np.array([matdata[i,18]])
+		ukdata[i,:] = np.array([matdata[i,19], matdata[i,20]])
+		veldata[i,:] = np.array([matdata[i,3], matdata[i,5], matdata[i,7]])
+		# print(np.array([matdata[i,3], matdata[i,5], matdata[i,7]]))
+		uveldata[i,:] = np.array([matdata[i,4], matdata[i,6], matdata[i,8]])/2
+	#####################################################################
+
+	vmax = 0
+	vindex = 0
+	for i, row in enumerate(veldata):
+		if (row[0] > vmax):
+			vmax = row[0]
+			vindex = i
+
+	kmax = 0
+	kindex = 0
+	for i, val in enumerate(kdata):
+		if (val > kmax):
+			kmax = val
+			kindex = i
+
+	if (LOUD == True):
+		print("Velocity:", veldata[vindex,0], "\ Uncertainty:", uveldata[vindex,0])
+		print("TKE:", kdata[kindex], "\ Uncertainty:", kdata[kindex])
+
+	return veldata[vindex,0], uveldata[vindex,0], kdata[kindex], kdata[kindex]
+
 # sensitivity on velocity, k, mu, rho, D
 
-def get(dr, Nx1, Nx2, Ny, Nz, npx, npy, npz, case, ufactor):
-
-	# run openfoam 
-	runstr = './run \
-		-N {} {} {} {} \
-		-np {} {} {} \
-		-case {} \
-		-Ufactor {} \
-		>senslog'.format(
-			Nx1, Nx2, Ny, Nz, # number of volumes 
-			npx, npy, npz, # parallel decomposition 
-			case, # case to run 
-			ufactor # scale velocity 
-			)
-
-	x = os.system(runstr)
-	if (x != 0): # exit if problems 
-		print(runstr)
-		sys.exit()
+def get(dr):
 
 	y, k = np.loadtxt(dr+'/k', unpack=True) # read in k from dr directory 
 
@@ -56,6 +136,59 @@ npz = 1
 # case to run 
 case = 0 
 
+# set case dependent values 
+inletVelocity = '' # store inlet velocity string for generateInlet  
+if (case == 0): # N339, .6 m/s, same density 
+	inletVelocity = '.6' 
+
+	# set density 
+	rhoTop = 998 
+	rhoBottom = 998 
+
+	# set mu 
+	muTop = 1.002e-3 
+	muBottom = 1.002e-3 
+
+elif (case == 1): # N337, 1 m/s, same density  
+	inletVelocity = '1' 
+
+	# set density 
+	rhoTop = 998
+	rhoBottom = 998 
+
+	# set mu 
+	muTop = 1.002e-3 
+	muBottom = 1.002e-3 
+
+elif (case == 2): # N320, .6 m/s, different density  
+	inletVelocity = '.6'
+
+	# set density 
+	rhoTop = 998 
+	rhoBottom = 1008 
+
+	# set mu 
+	muTop = 1.002e-3 
+	muBottom = .991e-3 
+
+elif (case == 3): # N318, 1 m/s, different density, blind case 
+	inletVelocity = '1'
+
+	# set density 
+	rhoTop = 998 
+	rhoBottom = 1008 
+
+	# set mu 
+	muTop = 1.002e-3 
+	muBottom = .991e-3 
+
+else: # exit if other case given 
+	print('no case found')
+	sys.exit()
+
+# set mass diffusivity 
+Dab = 1e-6 
+
 # number of simulations per variable 
 nruns = 5 
 
@@ -64,17 +197,137 @@ scale = np.logspace(-3, -.5, nruns)
 
 kint = np.zeros(nruns)
 
+# velocity, k, mu, rho, D
+coefvals = np.zeros(7)
+
 # get k with no perturbation 
-k_0 = get(readDir, Nx1, Nx2, Ny, Nz, npx, npy, npz, case, 1)
+# run openfoam 
+runstr = './run \
+	-N {} {} {} {} \
+	-np {} {} {} \
+	-case {} \
+	>senslog'.format(
+		Nx1, Nx2, Ny, Nz, # number of volumes 
+		npx, npy, npz, # parallel decomposition 
+		case, # case to run 
+		)
 
-# store coefficient from each run 
+x = os.system(runstr)
+if (x != 0): # exit if problems 
+	print(runstr)
+	sys.exit()
+k_0 = get(readDir)
+
+vmax, uv, kmax, uk = maxVals(inletVelocity)
+
+print("Working on velocity")
+# coef = np.zeros(nruns)
+# for i in range(nruns):
+# 	# run openfoam 
+# 	runstr = './run \
+# 		-N {} {} {} {} \
+# 		-np {} {} {} \
+# 		-case {} \
+# 		-Ufactor {} \
+# 		>senslog'.format(
+# 			Nx1, Nx2, Ny, Nz, # number of volumes 
+# 			npx, npy, npz, # parallel decomposition 
+# 			case, # case to run 
+# 			scale[i] # scale velocity 
+# 			)
+
+# 	x = os.system(runstr)
+# 	if (x != 0): # exit if problems 
+# 		print(runstr)
+# 		sys.exit()
+
+# 	k = get(readDir)
+# 	coef[i] = (k - k_0)/(vmax*(scale[i]-1))
+# 	print(coef[i])
+
+# if (np.std(coef) > 0.5*np.mean(coef)):
+# 	print("Error: large standard deviation for sensitivity analysis")
+# coefvals[0] = np.mean(coef)
+
+print("Working on k")
+# coef = np.zeros(nruns)
+# for i in range(nruns):
+# 	# run openfoam 
+# 	runstr = './run \
+# 		-N {} {} {} {} \
+# 		-np {} {} {} \
+# 		-case {} \
+# 		-kfactor {} \
+# 		>senslog'.format(
+# 			Nx1, Nx2, Ny, Nz, # number of volumes 
+# 			npx, npy, npz, # parallel decomposition 
+# 			case, # case to run 
+# 			scale[i] # scale velocity 
+# 			)
+
+# 	x = os.system(runstr)
+# 	if (x != 0): # exit if problems 
+# 		print(runstr)
+# 		sys.exit()
+
+# 	k = get(readDir)
+# 	coef[i] = (k - k_0)/(kmax*(scale[i]-1))
+# 	print(coef[i])
+
+# if (np.std(coef)/np.mean(coef) > 0.1):
+# 	print("Error: large standard deviation for sensitivity analysis")
+# coefvals[1] = np.mean(coef)
+
 coef = np.zeros(nruns)
-for i in range(nruns):
-	k = get(readDir, Nx1, Nx2, Ny, Nz, npx, npy, npz, case, scale[i])
 
-	coef[i] = (k - k_0)/scale[i]
+def run(dr, Nx1, Nx2, Ny, Nz, npx, npy, npz, case, props):
+	muTop = props[0]
+	rhoTop = props[1]
+	muBottom = props[2]
+	rhoBottom = props[3]
+	Dab = props[4]
 
-	print(coef[i])
+	runstr = './run \
+		-N {} {} {} {} \
+		-np {} {} {} \
+		-case {} \
+		-muTop {} \
+		-rhoTop {} \
+		-muBottom {} \
+		-rhoBottom {} \
+		-Dab {} \
+		>senslog'.format(
+			Nx1, Nx2, Ny, Nz, # number of volumes 
+			npx, npy, npz, # parallel decomposition 
+			case, # case to run 
+			muTop, 
+			rhoTop, 
+			muBottom, 
+			rhoBottom,
+			Dab
+			)
 
-print(np.mean(coef), np.std(coef))
+	x = os.system(runstr)
+	if (x != 0): # exit if problems 
+		print(runstr)
+		sys.exit()
 
+	return get(dr)
+
+# properties; muTop, rhoTop, muBottom, rhoBottom, Dab 
+propName = np.array(['muTop', 'rhoTop', 'muBottom', 'rhoBottom', 'Dab'])
+props = np.array([muTop, rhoTop, muBottom, rhoBottom, Dab])
+for i in range(len(props)): # loop through properties
+	print("Working on {}".format(props[i]))
+	for j in range(nruns): # loop through perturbations 
+		newprop = np.copy(props)
+		newprop[i] += scale[j]*props[i] # perturb each variable 
+		k = run(readDir, Nx1, Nx2, Ny, Nz, npx, npy, npz, case, newprop)
+		coef[j] = (k - k_0)/(newprop[i] - props[i])
+		print(coef[j])
+
+	if (np.std(coef)/np.mean(coef) > 0.1):
+		print("Error: large standard deviation for sensitivity analysis")
+	coefvals[i+2] = np.mean(coef)
+
+print(coefvals)
