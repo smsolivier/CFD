@@ -415,6 +415,55 @@ def generateInlet(data, ufactor=1.0, kfactor=1.0, scheme='linear', PLOT=False, S
 	# print("Done!")
 	##########################################################################
 
+	##########################################################################
+	# Repeat the exact same process above for the inlet turbulent kinetic energy values
+	##########################################################################
+	l = 1/30
+	newO = np.sqrt(newK)/l
+
+	lines = readin(projectPATH+'/0/'+'omega')
+	topFound = False
+	botFound = False
+	for i, line in enumerate(lines):
+		if (line.strip() == patches[0]):
+			topStartPos = i+1
+			topFound = True
+		elif (topFound == True and line.strip() == '}'):
+			topEndPos = i
+			topFound = False
+		elif (line.strip() == patches[1]):
+			botStartPos = i+1
+			botFound = True
+		elif (botFound == True and line.strip() == '}'):
+			botEndPos = i
+			botFound = False
+
+	f = open(projectPATH+'/0/'+'omega', 'w')
+	for i in np.arange(topStartPos+1):
+		f.write(lines[i])
+	f.write('        type            fixedValue;\n')
+	f.write('        value           nonuniform List<scalar>\n')
+	f.write('{}\n'.format(nTopCells))
+	f.write('(\n')
+	for i in range(nTopCells):
+		f.write('{}\n'.format(fmt%(newO[i])))
+	f.write(')\n')
+	f.write(';\n')
+	for i in np.arange(topEndPos,botStartPos+1):
+		f.write(lines[i])
+	f.write('        type            fixedValue;\n')
+	f.write('        value           nonuniform List<scalar>\n')
+	f.write('{}\n'.format(nTopCells))
+	f.write('(\n')
+	for i in range(nTopCells,nCells):
+		f.write('{}\n'.format(fmt%(newO[i])))
+	f.write(')\n')
+	f.write(';\n')
+	for i in np.arange(botEndPos,len(lines)):
+		f.write(lines[i])
+	f.close()
+	##########################################################################
+
 	if (PLOT == True):
 		plotData = np.array(['matvals', 'posdata', 'veldata', 'matpos',
 			'kdata', 'newVx', 'newVy', 'newVz', 'newK'])
