@@ -396,10 +396,7 @@ def generateInlet(data, ufactor=1.0, kfactor=1.0, scheme='linear', PLOT=False, S
 	f.write('{}\n'.format(nTopCells))
 	f.write('(\n')
 	for i in range(nTopCells):
-		if (newK[i] == 0):
-			f.write('{}\n'.format(fmt%(1e-10)))
-		else:
-			f.write('{}\n'.format(fmt%(newK[i])))
+		f.write('{}\n'.format(fmt%(newK[i])))
 	f.write(')\n')
 	f.write(';\n')
 	for i in np.arange(topEndPos,botStartPos+1):
@@ -409,10 +406,7 @@ def generateInlet(data, ufactor=1.0, kfactor=1.0, scheme='linear', PLOT=False, S
 	f.write('{}\n'.format(nTopCells))
 	f.write('(\n')
 	for i in range(nTopCells,nCells):
-		if (newK[i] == 0):
-			f.write('{}\n'.format(fmt%(1e-10)))
-		else:
-			f.write('{}\n'.format(fmt%(newK[i])))
+		f.write('{}\n'.format(fmt%(newK[i])))
 	f.write(')\n')
 	f.write(';\n')
 	for i in np.arange(botEndPos,len(lines)):
@@ -452,7 +446,10 @@ def generateInlet(data, ufactor=1.0, kfactor=1.0, scheme='linear', PLOT=False, S
 	f.write('{}\n'.format(nTopCells))
 	f.write('(\n')
 	for i in range(nTopCells):
-		f.write('{}\n'.format(fmt%(newO[i])))
+		if (newO[i] == 0):
+			f.write('{}\n'.format(fmt%(1e-10)))
+		else:
+			f.write('{}\n'.format(fmt%(newO[i])))
 	f.write(')\n')
 	f.write(';\n')
 	for i in np.arange(topEndPos,botStartPos+1):
@@ -462,7 +459,10 @@ def generateInlet(data, ufactor=1.0, kfactor=1.0, scheme='linear', PLOT=False, S
 	f.write('{}\n'.format(nTopCells))
 	f.write('(\n')
 	for i in range(nTopCells,nCells):
-		f.write('{}\n'.format(fmt%(newO[i])))
+		if (newO[i] == 0):
+			f.write('{}\n'.format(fmt%(1e-10)))
+		else:
+			f.write('{}\n'.format(fmt%(newO[i])))
 	f.write(')\n')
 	f.write(';\n')
 	for i in np.arange(botEndPos,len(lines)):
