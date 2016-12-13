@@ -292,7 +292,7 @@ def globalMerit(y_ex, u_ex, sigma_ex, u, sigma, alpha, beta):
 
 	return M 
 
-def modelError(grid, val_ex, sigma_ex, val, sigma):
+def modelError(grid, val_ex, sigma_ex, val, sigma, uinput):
 	# interpolate to centerline 
 	val_ex_0 = interp1d(grid, val_ex, kind='cubic')(0)
 	sigma_ex_0 = interp1d(grid, sigma_ex, kind='cubic')(0)
@@ -300,11 +300,31 @@ def modelError(grid, val_ex, sigma_ex, val, sigma):
 	val_0 = interp1d(grid, val, kind='cubic')(0) 
 	sigma_0 = interp1d(grid, sigma, kind='cubic')(0)
 
-	E = val_0 - val_ex_0
+	E = (val_0 - val_ex_0)/val_ex_0
 
-	uval = np.sqrt(sigma_0**2 + sigma_ex_0**2) 
+	uval = np.sqrt(sigma_0**2 + sigma_ex_0**2 + uinput**2) 
 
 	return E, uval
+
+def inputUncert(case):
+	''' read in input uncertainty ''' 
+	caseName = ['N339', 'N337', 'N320','N318'] 
+
+	dr = 'InputUncertainty/' + caseName[case] + '.csv'
+
+	f = open(dr, 'r')
+
+	u = 0 # store overall uncertainty 
+	for line in f:
+		if line.startswith('Overall'):
+
+			u = float(line.split(',')[1])
+
+	f.close()
+
+	return 2*u # return 2 sigma value 
+
+
 
 def handle(case, expDir, gciDir, subDir, N, alpha, beta):
 	''' combines 
@@ -325,6 +345,15 @@ def handle(case, expDir, gciDir, subDir, N, alpha, beta):
 	# get GCI data 
 	u, sigma, k, sigmak, c, sigmac = readGCI(gciDir, subDir, N, y_ex/1000, yc/1000) 
 
+	# get input uncertainty 
+	uinput = inputUncert(case)
+
+	# add in uinput to gci uncertainty 
+	combine = lambda x, y: np.sqrt(x**2 + y**2) 
+	sigma = combine(sigma, uinput)
+	sigmak = combine(sigmak, uinput)
+	sigmac = combine(sigmac, uinput)
+
 	# compute M 
 	M = globalMerit(y_ex, u_ex, sigma_ex, u, sigma, alpha, beta)
 
@@ -334,7 +363,15 @@ def handle(case, expDir, gciDir, subDir, N, alpha, beta):
 	# compute M for C 
 	Mc = globalMerit(yc, c_ex, sigmac_ex, c, sigmac, alpha, beta)
 
-	E, uval = modelError(y_ex, u_ex, sigma_ex, u, sigma)
+	# --- compute model error --- 
+	# get relative errors and relative uncertainties 
+	Eu, uval_u = modelError(y_ex, u_ex, sigma_ex, u, sigma, uinput)
+	Ek, uval_k = modelError(y_ex, k_ex, ksigma_ex, k, sigmak, uinput)
+	Ec, uval_c = modelError(yc, c_ex, sigmac_ex, c, sigmac, uinput)
+
+	# L1 norm of three centerline values 
+	E = np.linalg.norm([Eu, Ek, Ec], 1) # total relative error 
+	uval = np.sqrt(uval_u**2 + uval_k**2 + uval_c**2) # total relative uncertainty 
 
 	return (
 		y_ex, u_ex, sigma_ex, # experimental Ux 
@@ -538,6 +575,14 @@ if __name__ == '__main__':
 		# fig2.savefig('report/k.pdf')
 		# fig3.savefig('report/C.pdf')
 
+		# L1 norm of all distances 
+		Etotal = np.linalg.norm(E, 1) 
+
+		uval_tot = 0
+		for i in range(len(dist)):
+			uval_tot += uval[i]**2 
+		uval_tot = np.sqrt(uval_tot)
+
 		print('\nM Values:')
 		print('{:<6} {:<20} {:<20} {:<20}'.format('Dist', 'Mu', 'Mk', 'Mc'))
 		table = tex.table()
@@ -568,7 +613,23 @@ if __name__ == '__main__':
 				tex.utils.writeNumber(uval[i]), # uncertainty 
 				tex.utils.writeNumber(uval[i]/np.fabs(E[i])) # ratio 
 				)
-		table.save('report/CE.tex')
+
+		# add line for overal value 
+		table.addLine(
+			'Overall', # name of line 
+			tex.utils.writeNumber(Etotal), # comparison error 
+			tex.utils.writeNumber(uval_tot), # uncertainty 
+			tex.utils.writeNumber(uval_tot/Etotal) # ratio 
+			)
+		table.save('report/CE'+str(case)+'.tex')
 
 
-		plt.show()
+		macro = tex.macro()
+		macro.define('Etot'+str(case), Etotal, '{:.3g}')
+		macro.define('uval_tot'+str(case), uval_tot, '{:.3g}')
+		macro.define('ratio'+str(case)+'.tex', uval_tot/Etotal, '{:.3g}')
+		macro.save('report/Emacro_'+str(case)+'.tex')
+
+		print(Etotal, uval_tot, uval_tot/Etotal)
+
+		# plt.show()
