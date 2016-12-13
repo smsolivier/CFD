@@ -5,6 +5,7 @@ import os
 import sys 
 
 import numpy as np 
+import shutil
 
 from scipy.interpolate import interp1d
 import scipy.integrate as integrate 
@@ -242,6 +243,12 @@ k_0, U_0, C_0 = get(readDir)
 
 vmax, uv, kmax, uk = maxVals(inletVelocity)
 namespace = "Scale,k,U,C"
+
+# make directory gciData 
+dataDir = 'InputUncertainty/Runs/'
+if (os.path.isdir(dataDir)):
+	shutil.rmtree(dataDir)
+os.makedirs(dataDir)
 
 print("Ux Sensitivity")
 coef = np.zeros([3,nruns])
