@@ -58,7 +58,7 @@ parser.add_argument('-simple', action='store_true', help='use geometry without a
 # run readFoam.py to compare answer to data 
 parser.add_argument('-readFoam', action='store_true', help='run readFoam.py to plot the answer and experimental data')
 # specify which case to run 
-parser.add_argument('-case', type=int, default=0, help='0: N339, 1: N337, 2: N320')
+parser.add_argument('-case', type=int, default=0, help='0: N339, 1: N337, 2: N320, 3: N318')
 
 # use interFoam 
 parser.add_argument('-interFoam', action='store_true', help='use interFoam instead of twoLiquidMixingFoam')
