@@ -127,13 +127,97 @@ def get(dr):
 
 	return kint, Uint, Cint
 
+def readsens(case):
+	if (case == 0):
+		file = 'N339'
+	elif (case == 1):
+		file = 'N337'
+	elif (case == 2):
+		file = 'N320'
+	else:
+		file = 'N318'
+
+	# set case dependent values 
+	inletVelocity = '' # store inlet velocity string for generateInlet  
+	if (case == 0): # N339, .6 m/s, same density 
+		inletVelocity = '.6' 
+
+		# set density 
+		rhoTop = 998 
+		rhoBottom = 998 
+
+		# set mu 
+		muTop = 1.002e-3 
+		muBottom = 1.002e-3 
+
+	elif (case == 1): # N337, 1 m/s, same density  
+		inletVelocity = '1' 
+
+		# set density 
+		rhoTop = 998
+		rhoBottom = 998 
+
+		# set mu 
+		muTop = 1.002e-3 
+		muBottom = 1.002e-3 
+
+	elif (case == 2): # N320, .6 m/s, different density  
+		inletVelocity = '.6'
+
+		# set density 
+		rhoTop = 998 
+		rhoBottom = 1008 
+
+		# set mu 
+		muTop = 1.002e-3 
+		muBottom = .991e-3 
+
+	elif (case == 3): # N318, 1 m/s, different density, blind case 
+		inletVelocity = '1'
+
+		# set density 
+		rhoTop = 998 
+		rhoBottom = 1008 
+
+		# set mu 
+		muTop = 1.002e-3 
+		muBottom = .991e-3 
+
+	else: # exit if other case given 
+		print('no case found')
+		sys.exit()
+
+	vmax, uv, kmax, uk = maxVals(inletVelocity)
+
+	inputs = np.array(['U', 'k', 'muTop', 'muBottom', 'rhoTop', 'rhoBottom', 'Dab'])
+	# uncertainty[-1] is the standard deviation of Dab, assumed to be 5e-7 with a value
+	# of 1e-6 (round off error)
+	uncertainty = np.array([uv, uk, 0.0005, 0.0005, 0.5, 0.5, 5e-7])
+	fmt='%.4e'
+
+	sensativities = np.array(['k', 'U', 'C'])
+
+	for n, sen in enumerate(sensativities):
+		# print(sen)
+		inputu = 0
+		f = open('InputUncertainty/{}-{}.csv'.format(file,sen), 'w')
+		f.write('Input,Coefficient,Uncertainty\n')
+		for i, inp in enumerate(inputs):
+			vals = np.loadtxt('InputUncertainty/Runs/{}-{}.csv'.format(file,inp), skiprows=1, delimiter=',')
+			# print("\t", inp, vals[i,n+1], uncertainty[i])
+			f.write('{},{},{}\n'.format(inp,fmt%vals[i,n+1],fmt%uncertainty[i]))
+			inputu += (vals[i,n+1]*uncertainty[i])**2
+		f.write('Overall Uncertainty,{}\n'.format(np.sqrt(inputu)))
+		f.close()
+
+
 
 readDir = 'output/450' # place to read k values from 
 
 # number of volumes 
 Nx1 = 10 
-Nx2 = 30 
-Ny = 20 
+Nx2 = 60 
+Ny = 25 
 Nz = 1 
 
 # parallel decomposition
@@ -210,7 +294,7 @@ else: # exit if other case given
 Dab = 1e-6 
 
 # number of simulations per variable 
-nruns = 5 
+nruns = 10
 
 # multiplicative factor for each variable 
 scale = np.logspace(-3, -.5, nruns)
@@ -381,17 +465,19 @@ props = np.array([muTop, rhoTop, muBottom, rhoBottom, Dab])
 for i in range(len(props)): # loop through properties
 	print("{} Sensativity".format(propName[i]))
 	for j in range(nruns): # loop through perturbations
-		print("Scale {}:".format(scale[i]))
+		print("Scale {}:".format(scale[j]))
 		newprop = np.copy(props)
-		newprop[i] += scale[j]*props[i] # perturb each variable 
+		newprop[i] += scale[j]*props[i] # perturb each variable
+
+		run(readDir, Nx1, Nx2, Ny, Nz, npx, npy, npz, case, newprop)
 
 		k, U, C = get(readDir)
-		coef[0,i] = (k - k_0)/(newprop[i] - props[i])
-		coef[1,i] = (U - U_0)/(newprop[i] - props[i])
-		coef[2,i] = (C - C_0)/(newprop[i] - props[i])
-		print("\tk:", coef[0,i])
-		print("\tU:", coef[1,i])
-		print("\tC:", coef[2,i])
+		coef[0,j] = (k - k_0)/(newprop[i] - props[i])
+		coef[1,j] = (U - U_0)/(newprop[i] - props[i])
+		coef[2,j] = (C - C_0)/(newprop[i] - props[i])
+		print("\tk:", coef[0,j])
+		print("\tU:", coef[1,j])
+		print("\tC:", coef[2,j])
 
 	for n, row in enumerate(coef):
 		coefvals[n,:] = np.mean(row)
@@ -405,23 +491,6 @@ for i in range(len(props)): # loop through properties
 
 	temp = np.concatenate([scale.reshape([1,nruns]),coef], axis=0)
 	temp = temp.T
-	np.savetxt('InputUncertainty/Runs/{}-{}'.format(file,propName[i]), temp, header=namespace, delimiter=',')
-	coef = np.zeros([3,nruns])
+	np.savetxt('InputUncertainty/Runs/{}-{}.csv'.format(file,propName[i]), temp, header=namespace, delimiter=',')
 
-inputs = np.array(['Ux', 'k', 'mu_top', 'mu_bottom', 'rho_top', 'rho_bottom', 'Dab'])
-# uncertainty[-1] is the standard deviation of Dab, assumed to be 5e-7 with a value
-# of 1e-6 (round off error)
-uncertainty = np.array([uv, uk, 0.0005, 0.0005, 0.5, 0.5, 5e-7])
-inputu = 0
-fmt='%.4e'
-
-sensativities = np.array(['k', 'U', 'C'])
-
-for n, sen in enumerate(sensativities):
-	f = open('InputUncertainty/{}-{}.csv'.format(file,sen), 'w')
-	f.write('Input,Coefficient,Uncertainty\n')
-	for i, j, k in zip(inputs, coefvals[n,:], uncertainty):
-		f.write('{},{},{}\n'.format(i,fmt%j,fmt%k))
-		inputu += (j*k)**2
-	f.write('Overall Uncertainty,{}\n'.format(np.sqrt(inputu)))
-	f.close()
+readsens(case)
